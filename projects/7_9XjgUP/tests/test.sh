@@ -1,91 +1,54 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Simple automated sanity checks based on TEST.md acceptance criteria.
-# This script does not replace manual/browser testing; it just validates structure and basic build.
+# Simple verification script for structural and build-related checks.
+# This does NOT replace the full manual test plan in tests/TEST_PLAN.md.
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-
-echo "== Sanity check: project structure =="
-
-if [ ! -d "$PROJECT_ROOT/app" ]; then
-  echo "ERROR: app/ directory not found at project root: $PROJECT_ROOT" >&2
-  exit 1
-fi
-
-if [ ! -f "$PROJECT_ROOT/README.md" ]; then
-  echo "ERROR: README.md not found in project root: $PROJECT_ROOT" >&2
-  exit 1
-fi
-
-echo "app/ and README.md found."
-
-echo "== Checking Blazor project files in app/ =="
 APP_DIR="$PROJECT_ROOT/app"
 
-if [ ! -f "$APP_DIR/Program.cs" ]; then
-  echo "ERROR: Program.cs not found in app/; expected for Blazor WebAssembly project." >&2
+echo "Project root: $PROJECT_ROOT"
+echo "App directory: $APP_DIR"
+
+if [ ! -d "$APP_DIR" ]; then
+  echo "ERROR: app/ directory not found at $APP_DIR" >&2
   exit 1
 fi
 
-if [ ! -d "$APP_DIR/Pages" ]; then
-  echo "ERROR: Pages/ directory not found in app/." >&2
+echo "Checking required root files..."
+[ -f "$PROJECT_ROOT/README.md" ] || { echo "ERROR: README.md missing in project root"; exit 1; }
+[ -f "$PROJECT_ROOT/logs/CHANGELOG.md" ] || { echo "ERROR: logs/CHANGELOG.md missing"; exit 1; }
+
+echo "Checking Blazor structure..."
+[ -f "$APP_DIR/Program.cs" ] || { echo "ERROR: app/Program.cs missing"; exit 1; }
+[ -d "$APP_DIR/Pages" ] || { echo "ERROR: app/Pages directory missing"; exit 1; }
+[ -d "$APP_DIR/wwwroot" ] || { echo "ERROR: app/wwwroot directory missing"; exit 1; }
+
+echo "Ensuring no forbidden frontend/backend directories exist..."
+if [ -d "$PROJECT_ROOT/frontend" ] || [ -d "$PROJECT_ROOT/backend" ]; then
+  echo "ERROR: Disallowed frontend/ or backend/ directory detected in project root" >&2
   exit 1
 fi
 
-if [ ! -d "$APP_DIR/wwwroot" ]; then
-  echo "ERROR: wwwroot/ directory not found in app/." >&2
-  exit 1
-fi
-
-# Look for a .csproj in app/
-CS_PROJ_COUNT=$(find "$APP_DIR" -maxdepth 1 -name "*.csproj" | wc -l | tr -d ' ')
-if [ "$CS_PROJ_COUNT" -eq 0 ]; then
-  echo "ERROR: No .csproj file found directly under app/." >&2
-  exit 1
-fi
-
-echo "Blazor project structure appears present."
-
-echo "== Building app with dotnet build =="
-(
-  cd "$APP_DIR"
-  dotnet build > /dev/null
-)
-
-echo "Build succeeded."
-
-echo "== Checking presence of key documentation files =="
-DOCS_MISSING=0
-for f in ROTARY_KNOWLEDGE_BASE.md SIMPLIFIED_MODELS.md GLOSSARY_ROTARY_TERMS.md SIMULATION_VALIDATION_NOTES.md QA_TEST_CASES.md USABILITY_FEEDBACK.md SIMULATION_VALIDATION_REPORT.md FINAL_APPROVAL_CHECKLIST.md; do
-  if [ ! -f "$PROJECT_ROOT/$f" ]; then
-    echo "WARNING: Expected documentation file missing: $f"
-    DOCS_MISSING=1
-  fi
-done
-
-if [ "$DOCS_MISSING" -eq 1 ]; then
-  echo "One or more documentation files are missing; see warnings above."
+echo "Checking knowledge base and model documentation files (if present)..."
+if [ ! -d "$APP_DIR/Data" ]; then
+  echo "WARNING: app/Data directory not found; expected knowledge base files may be missing."
 else
-  echo "All expected documentation files are present."
-fi
-
-echo "== Basic grep checks for required pages and services =="
-
-REQUIRED_PAGES=(Index.razor Simulation.razor Glossary.razor HowItWorks.razor)
-for page in "${REQUIRED_PAGES[@]}"; do
-  if ! find "$APP_DIR/Pages" -maxdepth 1 -name "$page" | grep -q .; then
-    echo "WARNING: Expected page not found under app/Pages/: $page"
-  else
-    echo "Found page: $page"
+  KNOWN_OK=0
+  if [ -f "$APP_DIR/Data/RotaryKnowledge.md" ] || [ -f "$APP_DIR/Data/rotary-knowledge.json" ]; then
+    KNOWN_OK=1
   fi
-done
+  if [ "$KNOWN_OK" -eq 0 ]; then
+    echo "WARNING: Rotary knowledge base file not found in app/Data."
+  fi
 
-if ! grep -R "EngineSimulationService" "$APP_DIR" >/dev/null 2>&1; then
-  echo "WARNING: 'EngineSimulationService' not referenced in app/; verify simulation service implementation."
-else
-  echo "EngineSimulationService appears in app/ source."
+  [ -f "$APP_DIR/Data/SimulationModelNotes.md" ] || echo "WARNING: SimulationModelNotes.md not found in app/Data."
+  [ -f "$APP_DIR/Data/ModelValidation.md" ] || echo "WARNING: ModelValidation.md not found in app/Data."
 fi
 
-echo "== test.sh completed basic structural and build checks =="
-echo "Manual browser-based tests are still required per tests/TEST_PLAN.md."
+echo "Running dotnet build in app/..."
+cd "$APP_DIR"
+dotnet build >/dev/null
+
+echo "Basic structural and build checks passed."
+echo "For full coverage, execute manual tests described in tests/TEST_PLAN.md."

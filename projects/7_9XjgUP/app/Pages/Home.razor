@@ -1,7 +1,103 @@
-﻿@page "/"
+@page "/"
 
-<PageTitle>Home</PageTitle>
+<div class="page-home">
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Explore the 13B Rotary Engine</h1>
+            <p class="hero-subtitle">
+                See how a rotary engine breathes, burns, and wears as you tune it.
+            </p>
 
-<h1>Hello, world!</h1>
+            <div class="hero-cta">
+                <NavLink class="btn btn-primary" href="/simulation">
+                    Start Simulation
+                </NavLink>
+                <NavLink class="btn btn-secondary" href="/engine-overview">
+                    Learn the Basics
+                </NavLink>
+            </div>
+        </div>
 
-Welcome to your new app.
+        <div class="hero-visual">
+            <div class="rotor-visual" aria-hidden="true">
+                <div class="rotor-outer">
+                    <div class="rotor-inner">
+                        <div class="rotor apex apex-a"></div>
+                        <div class="rotor apex apex-b"></div>
+                        <div class="rotor apex apex-c"></div>
+                        <div class="rotor-core"></div>
+                    </div>
+                </div>
+            </div>
+            <p class="hero-visual-caption">
+                Stylized 13B-style rotor inside an epitrochoid housing. The full simulator shows motion, heat, and wear.
+            </p>
+        </div>
+    </section>
+
+    <section class="home-section how-it-works">
+        <h2>How this simulator helps you learn</h2>
+        <div class="card-grid three-cols">
+            <article class="card">
+                <div class="card-icon icon-visualize" aria-hidden="true"></div>
+                <h3>Visualize</h3>
+                <p>
+                    Watch a simplified rotary engine diagram animate through intake, compression, combustion, and exhaust.
+                </p>
+            </article>
+
+            <article class="card">
+                <div class="card-icon icon-tune" aria-hidden="true"></div>
+                <h3>Tweak Settings</h3>
+                <p>
+                    Adjust boost, air–fuel ratio, ignition timing, and RPM profile to see how each change affects the engine.
+                </p>
+            </article>
+
+            <article class="card">
+                <div class="card-icon icon-risk" aria-hidden="true"></div>
+                <h3>See Risk</h3>
+                <p>
+                    Get simple indicators for heat, wear, and overall risk levels, from “Safe” to “High-Risk”.
+                </p>
+            </article>
+        </div>
+    </section>
+
+    <section class="home-section who-for">
+        <h2>Who this is for</h2>
+        <div class="card-grid three-cols compact">
+            <article class="card">
+                <h3>Enthusiasts</h3>
+                <p>
+                    Curious about how a rotary works beyond memes and myths? Explore the moving parts and cycles visually.
+                </p>
+            </article>
+            <article class="card">
+                <h3>Students &amp; Learners</h3>
+                <p>
+                    Engineering and tech students can use the simulator as a visual aid to understand non-reciprocating engines.
+                </p>
+            </article>
+            <article class="card">
+                <h3>Builders &amp; Tuners</h3>
+                <p>
+                    Hobbyists can experiment with “what-if” scenarios to see how aggressive tunes might impact heat and wear.
+                </p>
+            </article>
+        </div>
+    </section>
+
+    <section class="home-section disclaimer-snippet">
+        <div class="disclaimer-card">
+            <h2>Educational tool, not tuning advice</h2>
+            <p>
+                This simulator uses simplified, approximate models to illustrate trends in heat, wear, and risk for a 13B-style rotary engine.
+                It is <strong>not</strong> manufacturer-certified and should not be used to tune a real engine.
+            </p>
+            <NavLink href="/about" class="disclaimer-link">
+                Read the full disclaimer
+            </NavLink>
+        </div>
+    </section>
+</div>

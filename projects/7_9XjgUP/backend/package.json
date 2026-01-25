@@ -1,15 +1,9 @@
 {
-  "name": "rotary-engine-simulator-backend",
+  "name": "rotary-engine-simulator-backend-placeholder",
   "version": "1.0.0",
-  "description": "Minimal backend for Rotary Engine Interactive Web Simulator",
-  "main": "server.js",
+  "private": true,
+  "description": "Placeholder file – this project is a Blazor WebAssembly app and does not require a Node/Express backend.",
   "scripts": {
-    "start": "node server.js"
-  },
-  "author": "",
-  "license": "MIT",
-  "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.19.2"
+    "start": "echo \"No backend server. This Blazor WebAssembly project runs via 'cd app && dotnet run'.\" && exit 0"
   }
 }

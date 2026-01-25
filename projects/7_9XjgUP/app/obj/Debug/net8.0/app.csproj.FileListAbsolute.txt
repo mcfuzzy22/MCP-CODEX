@@ -1029,3 +1029,4 @@
 /home/mcfuzzy22/projects/AI-team2/projects/7_9XjgUP/app/obj/Debug/net8.0/refint/app.dll
 /home/mcfuzzy22/projects/AI-team2/projects/7_9XjgUP/app/obj/Debug/net8.0/app.pdb
 /home/mcfuzzy22/projects/AI-team2/projects/7_9XjgUP/app/obj/Debug/net8.0/ref/app.dll
+/home/mcfuzzy22/projects/AI-team2/projects/7_9XjgUP/app/obj/Debug/net8.0/app.sourcelink.json
