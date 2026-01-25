@@ -1,0 +1,308 @@
+- General notes
+  - Run all tests from project root unless otherwise specified.
+  - Assume .NET SDK is installed (per README prerequisites).
+  - Where browser checks are required, note the browser and version used.
+  - Record any deviations from expected behavior, console errors, or layout issues.
+
+- 1. Project Structure & Setup
+
+  - 1.1 Blazor App Location & Startup
+    - Confirm `app/` directory exists in project root.
+    - Check that `app/` contains:
+      - A Blazor WebAssembly project file (e.g., `app.csproj` or similar).
+      - `Program.cs`
+      - `App.razor`
+      - `Pages/` folder
+      - `wwwroot/` folder
+    - From project root:
+      - `cd app`
+      - Run `dotnet run`
+      - Verify that the application builds and runs without errors.
+      - Note the URL in console output (typically `https://localhost:****` or `http://localhost:****`).
+      - Open the URL in a browser and ensure the app loads without runtime errors (blank screen, exception UI, etc.).
+
+  - 1.2 README Content & Accuracy
+    - Confirm a `README.md` file exists in the project root (same level as `app/`).
+    - Open and verify it includes:
+      - Project overview describing the rotary engine simulator and its purpose.
+      - Prerequisites, including .NET SDK version.
+      - Setup steps.
+      - Run instructions using `dotnet run` executed inside `app/`.
+      - Explanation that all UI and logic live inside the Blazor app in `app/`.
+    - On a clean-ish environment (or after `dotnet clean` inside `app/`), follow exactly the README instructions:
+      - Install prerequisites if needed.
+      - Run the specified commands.
+      - Confirm that the application runs as described, with the same URL pattern and behavior as in 1.1.
+
+- 2. Content & Knowledge Base
+
+  - 2.1 Rotary Fundamentals Coverage
+    - In the running app, locate and open pages/sections covering:
+      - Overview / How It Works / similar informational sections.
+    - Verify that content explains:
+      - Rotor geometry and motion relative to housing.
+      - Apex, side, and corner seals (what they do, high-level descriptions).
+      - Eccentric shaft operation.
+      - The four strokes/phases: intake, compression, combustion, exhaust.
+    - Confirm language is accessible:
+      - Look for minimal unexplained jargon.
+      - Verify any technical terms are either briefly explained inline or clearly linked/referenced to the glossary.
+    - Check for presence of diagrams/images or clearly described illustrations; if diagrams are referenced, confirm assets exist in `app/wwwroot/` and render correctly in the browser.
+
+  - 2.2 Failure Modes & Specs
+    - Locate content describing failure modes and 13B specs (likely “Overview”, “How It Works”, or a dedicated section).
+    - Confirm all of the following are mentioned with concise explanations:
+      - Apex seal wear/chipping.
+      - Overheating.
+      - Detonation / pre-ignition.
+    - Confirm approximate Mazda 13B parameters are present:
+      - Displacement description (e.g., how rotary displacement is defined).
+      - Approximate compression ratio.
+      - Typical safe RPM ranges (idle, street redline, track limits).
+    - Check that failure modes include high-level mitigation or explanation (e.g., cooling, conservative timing, richer mixtures).
+    - Verify there are no proprietary schematics or confidential-looking data:
+      - Only high-level diagrams; no OEM maps or CAD drawings.
+
+  - 2.3 Glossary Page
+    - In the navigation menu, confirm a “Glossary” (or similarly named) entry exists and is clickable.
+    - Open the Glossary page and verify:
+      - It includes definitions for key terms such as:
+        - Apex seal
+        - Eccentric shaft
+        - Epitrochoid
+        - Porting
+        - Detonation
+      - Definitions are concise, non-technical, and understandable to non-experts.
+    - Check that:
+      - Terms used elsewhere in the app visually indicate they are defined (e.g., links, tooltips, or references), or content explicitly points users to the glossary.
+
+- 3. Simulation Logic
+
+  - 3.1 Parameter Input Range Validation
+    - Navigate to the Simulation page.
+    - Verify presence of input controls for:
+      - Boost pressure.
+      - AFR.
+      - Ignition timing (either presets or numeric input).
+      - RPM.
+      - Seal type/material selector.
+    - Attempt to enter or select values outside of intended ranges:
+      - Boost:
+        - Try negative values (e.g., -5) and larger than maximum (e.g., 30 if documented max is 25).
+        - Confirm the UI either clamps to valid range or rejects with validation messaging.
+      - AFR:
+        - Attempt values <10 and >16 (or whatever range is documented).
+        - Confirm out-of-range inputs are clamped/rejected and visually marked invalid.
+      - Ignition timing:
+        - If preset options, confirm you cannot enter arbitrary invalid values.
+        - If numeric, try obviously unsafe extremes and ensure the control enforces model-defined boundaries.
+      - RPM:
+        - Move slider or enter value below minimum (e.g., 0) and above maximum (e.g., 12000).
+        - Confirm graceful clamping or validation messages.
+      - Seal type:
+        - Ensure selection is limited to valid options (e.g., “Stock”, “Performance”, “Race-only”) and cannot be set to an undefined/blank value.
+    - Confirm that invalid inputs do not break the page (no exceptions or console errors).
+
+  - 3.2 Simulation Output Correctness (Relative)
+    - With the Simulation page open, identify and note:
+      - Wear index value and qualitative label.
+      - Thermal/heat index and qualitative label.
+      - Detonation/risk or overall risk index.
+      - Overall risk category label (e.g., “Safe”, “Aggressive”, “Engine-grenade”).
+    - Establish a baseline:
+      - Use a preset like “Stock street” or equivalent conservative configuration.
+      - Record indices and risk labels.
+    - Test trends:
+      - Increase boost stepwise while holding AFR, timing, RPM, and seals constant.
+        - Confirm wear and heat indices increase monotonically or at least trend upward.
+      - Adjust AFR leaner beyond the documented safe region while holding other params constant.
+        - Confirm detonation or risk index increases and risk label moves toward more severe categories.
+      - Advance ignition timing at:
+        - Low boost vs high boost.
+        - Confirm that for higher boost, advancing timing increases detonation risk more significantly.
+      - Increase RPM from near idle to near redline, holding other inputs constant.
+        - Confirm wear and thermal stress indices grow; ensure scaling matches documentation (e.g., more-than-linear if stated).
+      - Change seal type from stock to more robust/performance option.
+        - For same settings, verify wear index decreases appropriately for stronger seals.
+    - Confirm index values update immediately or with minor acceptable delay upon changes.
+
+  - 3.3 Risk Category Thresholds
+    - Locate documentation of thresholds:
+      - In `SIMPLIFIED_MODELS.md`, `SIMULATION_VALIDATION_NOTES.md`, or code comments within `EngineSimulationService`.
+      - Confirm thresholds for “Safe”, “Aggressive”, and “Engine-grenade” are explicitly defined.
+    - In the running app:
+      - Craft at least one input combination that yields each of the three risk labels.
+        - Record input sets and observed category.
+      - Adjust parameters slightly around the threshold boundaries:
+        - Confirm small changes produce predictable and consistent transitions between categories.
+      - Try extreme combinations (maximum boost, highest RPM, very lean AFR, advanced timing).
+        - Confirm a valid risk category is still shown (no “undefined” or blank state).
+
+- 4. Visualization & Interaction
+
+  - 4.1 Engine Animation Presence
+    - On the Simulation (or specified) page, confirm:
+      - A visualization of a rotary engine appears with a housing and rotor.
+      - At least three distinct chambers are visibly present or clearly implied.
+    - Check that:
+      - Animation is running by default or can be started via a “Play” or similar control.
+      - There is a “Pause” or “Stop” control that halts movement.
+      - When paused, rotor position is static; when resumed, movement continues correctly.
+    - Inspect `app/Components/EngineVisualizer.razor` (or equivalent) and any JS files in `app/wwwroot/js/` to confirm:
+      - Use of Canvas/SVG/WebGL and proper JS interop (no runtime errors in browser console).
+
+  - 4.2 RPM-Linked Animation Speed
+    - On the Simulation page:
+      - Verify an RPM slider/control is present and that its value is visibly linked to RPM in labels or output.
+      - While animation is running:
+        - Set RPM to low value (e.g., idle ~800–1000).
+          - Confirm animation is slow and individual motion is easily visible.
+        - Increase RPM to mid-range (e.g., 4000–6000).
+          - Confirm movement is noticeably faster but still smooth.
+        - Set RPM near maximum (e.g., 8000–9000).
+          - Confirm animation speed increases further without freezing, breaking, or becoming visually incoherent.
+      - Observe browser performance:
+        - Ensure CPU usage is reasonable and no major stutters occur on a typical dev machine.
+
+  - 4.3 Overlays & Visual Feedback
+    - Observe visualization for:
+      - Thermal stress overlay (color gradient on housing or rotor).
+      - Wear or seal indicators (color changing markers, icons, or global indicator).
+    - Change simulation parameters to drive heat index up and down (boost, RPM, AFR):
+      - Confirm visual colors or overlays shift logically from “cool” to “hot” and vice versa.
+    - Drive wear index higher by:
+      - Increasing RPM and boost with weaker seal type.
+      - Confirm visual wear/risk cues change (e.g., colors, icons, or warnings).
+    - Verify legends or labels:
+      - Ensure users can understand what colors/indicators mean (e.g., “Blue = cool, Red = hot” or textual legend).
+    - Check that updates to overlays occur in sync with simulation output updates.
+
+- 5. UI/UX & Usability
+
+  - 5.1 Navigation & Information Architecture
+    - From landing page:
+      - Confirm a clear navigation menu or header with entries for at least:
+        - Overview (or Home).
+        - How It Works.
+        - Simulation.
+        - Glossary.
+      - Ensure each menu item is clickable and routes to the appropriate page.
+    - Verify:
+      - Each key view is reachable within two clicks from landing.
+      - Page titles and main headings reflect the content (e.g., Simulation page is clearly labeled).
+    - Attempt navigation in various orders:
+      - Check that browser back/forward works as expected.
+      - No dead links or 404-like states.
+
+  - 5.2 Clarity for Non-Engineers
+    - On the Simulation page:
+      - Confirm tooltips or inline help text near:
+        - AFR control (explaining rich vs lean in plain language).
+        - Ignition timing control.
+        - Boost, RPM, and seal type controls.
+      - Validate risk messages:
+        - Include short, plain-language explanation (e.g., “High chance of engine knock” instead of just “High detonation index”).
+      - Scan UI for unexplained abbreviations:
+        - Ensure terms like AFR, RPM, etc., are either expanded once or clarified near first use.
+    - Check QA documentation (`QA_TEST_CASES.md`, `USABILITY_FEEDBACK.md`) for:
+      - At least one recorded informal usability session.
+      - Evidence that feedback was considered (e.g., notes on changes made or rationale for not applying specific suggestions).
+
+  - 5.3 Disclaimers & Safety Messages
+    - On the Simulation page:
+      - Locate the disclaimer text, verify it is:
+        - Near or above/below controls and outputs.
+        - Clearly states:
+          - Educational simulation.
+          - Not professional tuning advice.
+          - No guarantees or manufacturer endorsement.
+      - Confirm disclaimer is visible on:
+        - Desktop view at default resolution without excessive scrolling.
+        - Mobile/tablet-sized viewport (use browser dev tools).
+    - Confirm no text anywhere suggests:
+      - Professional or manufacturer-backed tuning recommendations.
+      - Guarantees of real-world performance.
+
+- 6. Performance & Technical Quality
+
+  - 6.1 App Load & Runtime Performance
+    - On a typical dev machine:
+      - With the app not running, start it using `dotnet run` in `app/`.
+      - Using a stopwatch or subjective observation, confirm:
+        - Initial load time is reasonable for a Blazor WebAssembly app.
+        - The app becomes interactive without excessive delay.
+      - Exercise typical flows:
+        - Navigate between all core pages.
+        - Adjust all simulation parameters several times.
+        - Start/pause the visualization and vary RPM.
+      - Observe:
+        - No noticeable lag (>0.5–1s) between input changes and updates.
+        - Browser dev tools console:
+          - No unhandled exceptions.
+          - No repeated error logs during typical interactions.
+
+  - 6.2 Browser Compatibility
+    - Run the app and test in:
+      - Latest Chrome.
+      - Latest Edge.
+      - Latest Firefox.
+      - Safari (if available on test machine).
+    - In each browser:
+      - Verify navigation works on all pages.
+      - Inputs (sliders, dropdowns, text fields) function correctly.
+      - Simulation indices and risk outputs update.
+      - Visualization renders and animates correctly.
+    - If any browser has issues:
+      - Document symptoms and error messages.
+      - Check for fallbacks (e.g., switch to simpler SVG if WebGL unavailable).
+      - Note any browser-specific limitations in QA documentation.
+
+  - 6.3 Code Structure & Extensibility
+    - Inspect `app/Services/EngineSimulationService.cs` (or equivalent):
+      - Confirm existence of:
+        - Strongly-typed input model (e.g., `EngineParameters`).
+        - Strongly-typed output model (e.g., `SimulationResult`).
+      - Verify service accepts an engine configuration or profile:
+        - Check for a class/record representing engine constants (e.g., 13B).
+        - Confirm design allows adding another engine by new config without rewriting core algorithms.
+    - Look for:
+      - Clear comments explaining:
+        - Where to add a new engine type.
+        - Any assumptions and simplifications.
+      - Minimal duplication:
+        - Ensure simulation logic is not spread across multiple components unnecessarily.
+      - Separation between:
+        - Content pages (Overview, How It Works).
+        - Simulation service.
+        - Visualization component(s).
+
+- 7. QA & Review Process
+
+  - 7.1 Content and Simulation Review Loop
+    - Open the following documents in project root or QA folder:
+      - `SIMPLIFIED_MODELS.md`
+      - `ROTARY_KNOWLEDGE_BASE.md`
+      - `SIMULATION_VALIDATION_NOTES.md`
+      - `QA_TEST_CASES.md`
+      - `USABILITY_FEEDBACK.md`
+      - `SIMULATION_VALIDATION_REPORT.md`
+      - `FINAL_APPROVAL_CHECKLIST.md`
+    - Confirm:
+      - `SIMPLIFIED_MODELS.md` matches the behavior observed in the simulation; any differences are explained in `SIMULATION_VALIDATION_REPORT.md`.
+      - `QA_TEST_CASES.md` lists:
+        - Normal operating scenarios.
+        - Edge/extreme scenarios (high boost, high RPM, lean AFR, advanced timing).
+      - `USABILITY_FEEDBACK.md` contains:
+        - At least one usability review.
+        - Prioritized issues or suggestions.
+      - `SIMULATION_VALIDATION_REPORT.md` provides:
+        - Summary of what was tested.
+        - Observed vs expected behavior.
+        - Issues, recommendations, and severity levels.
+      - `FINAL_APPROVAL_CHECKLIST.md`:
+        - Contains items for content accuracy, simulation plausibility, performance, compatibility, and disclaimers.
+        - Has statuses (e.g., checked/unchecked) indicating final readiness.
+    - Confirm there is explicit indication that:
+      - Research Agent has signed off on content/assumptions.
+      - Coding Agent has signed off on implementation alignment with the models.
+      - Reviewer Agent has completed at least one consolidation pass.

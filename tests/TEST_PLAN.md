@@ -1,0 +1,191 @@
+- Verify repository structure:
+  - Confirm presence of `/frontend`, `/backend`, `/design`, `/tests` directories.
+  - Confirm all required files from AGENT_TASKS.md exist:
+    - `design/ui_spec.md`
+    - `design/wireframe.(png|pdf|svg)`
+    - `frontend/index.html`
+    - `frontend/main.js`
+    - `frontend/README.md`
+    - `backend/server.(js|ts|py)`
+    - `backend/routes/agents.(js|py)`
+    - `backend/routes/approvals.(js|py)`
+    - `backend/routes/metrics.(js|py)`
+    - `backend/events.(js|py)`
+    - `backend/models.(js|py)` and/or `backend/storage.(js|py)`
+    - `backend/EVENTS.md`
+    - `backend/.env.example`
+    - `backend/README.md`
+    - `tests/README.md`
+    - `tests/basic_checks.(js|py)`
+    - `tests/test_scenarios.md`
+    - `tests/UX_NOTES.md`
+
+- Check TEST.md coverage:
+  - Confirm that the test assets in `/tests` implement all Tester-owned tasks T1, T8, T9.
+  - Confirm that described checks in `/tests` mention or reference:
+    - Core API routes (`/agents`, `/metrics`, `/costs`, `/approvals`).
+    - Real-time endpoint (`/events`).
+    - UI flows (agents, approvals, metrics, costs).
+
+- Backend verification (static review):
+  - Open `backend/README.md`:
+    - Ensure instructions to install dependencies and run server are present.
+    - Confirm mention of default port and environment variables (`PORT`, `TOKEN_COST_PER_1K`, optional `DATA_FILE_PATH`).
+  - Open `backend/.env.example`:
+    - Verify it includes at least `PORT` and `TOKEN_COST_PER_1K`.
+  - Open `backend/server.(js|ts|py)`:
+    - Confirm it starts an HTTP server and binds on configured port.
+    - Confirm it mounts routes for `/agents`, `/approvals`, `/metrics`, `/costs`, and `/events`.
+  - Open `backend/routes/agents.(js|py)`:
+    - Check presence of endpoints:
+      - `GET /agents`
+      - `GET /agents/:id`
+      - `POST /agents/:id/tasks`
+      - `POST /agents/:id/start`
+      - `POST /agents/:id/stop`
+      - `POST /agents/:id/retry`
+    - Verify basic error handling (404 unknown agent, 400 invalid input) with JSON error bodies.
+    - Verify response fields for `GET /agents` include: `id`, `name`, `status`, `lastTask` or equivalent summary, `currentStep`, metrics and cost summary.
+  - Open `backend/routes/approvals.(js|py)`:
+    - Confirm:
+      - `GET /approvals`
+      - `POST /approvals/:id/approve`
+      - `POST /approvals/:id/reject`
+    - Check approval model contains: `id`, `agentId`, `taskId`, `status`, `outputSummary`, timestamps.
+  - Open `backend/routes/metrics.(js|py)`:
+    - Confirm:
+      - `GET /metrics`
+      - `GET /costs`
+    - Ensure metrics cover totals and per-agent summaries; costs include per-agent and total tokens/cost.
+  - Open `backend/events.(js|py)`:
+    - Confirm implementation of SSE or WebSocket at `/events` (only one protocol, not both).
+    - Ensure utilities exist to broadcast:
+      - Agent status changes.
+      - New logs.
+      - Task lifecycle events.
+      - Approval events.
+      - Metrics/cost updates or minimal data to recompute.
+  - Open `backend/models.(js|py)` / `backend/storage.(js|py)`:
+    - Verify presence of data structures for agents, tasks, logs, approvals, and helpers for metrics/costs.
+    - Confirm storage is in-memory or simple local DB/JSON as per requirements.
+  - Open `backend/EVENTS.md`:
+    - Confirm event types and payload formats are documented.
+    - Ensure event names correspond to those emitted in `events.(js|py)`.
+
+- Frontend verification (static review):
+  - Open `frontend/README.md`:
+    - Check that it describes how to serve `index.html` (e.g., using a simple static server).
+    - Confirm it mentions where to configure API base URL (e.g., `config.js` or `config.example.js`).
+  - Open `frontend/index.html`:
+    - Confirm Tailwind CSS is included (CDN or built bundle).
+    - Verify semantic structure:
+      - Header or top bar.
+      - Global metrics and cost section.
+      - Agent list section.
+      - Agent detail/logs section.
+      - Pending approvals section (global or within detail).
+    - Confirm layout is single-page and desktop-first.
+  - Open `frontend/main.js`:
+    - Confirm initial data fetching from:
+      - `/agents`
+      - `/metrics`
+      - `/costs`
+      - `/approvals`
+    - Confirm UI state management for:
+      - Selected agent.
+      - Logs.
+      - Pending approvals.
+    - Confirm connection to `/events` via `EventSource` (SSE) or `WebSocket` (one protocol only).
+    - Verify event handlers update:
+      - Agent list row content and status badge.
+      - Agent detail panel.
+      - Logs view, with auto-scroll behavior described/implemented.
+      - Metrics and cost cards.
+      - Pending approvals UI.
+    - Confirm per-agent controls:
+      - Start, Stop, Retry, Assign Task actions calling backend routes.
+      - Buttons disable appropriately during requests.
+    - Confirm some reconnection strategy for the real-time channel (e.g., retry with delay on error/close).
+  - If present, open `frontend/config.example.js`:
+    - Confirm it defines a base API URL constant and inline note that user should copy/rename for real usage.
+
+- Design verification:
+  - Open `design/ui_spec.md`:
+    - Confirm it describes:
+      - Overall dashboard layout (sections & hierarchy).
+      - Key components: agent list, details/logs, controls, metrics, approvals.
+      - States for agent statuses and pending approvals.
+      - Labels, headings, and microcopy that make flows understandable.
+  - Open `design/wireframe.(png|pdf|svg)`:
+    - Manually visually inspect arrangement:
+      - Global metrics/cost cards at top.
+      - Agent list table.
+      - Detail/logs panel.
+      - Pending approvals area.
+    - Confirm matches conceptual layout described in `ui_spec.md`.
+
+- Tester assets verification:
+  - Open `tests/README.md`:
+    - Confirm it documents:
+      - How to start backend (exact commands and prerequisites).
+      - How to start/serve frontend.
+      - How to run automated tests (including `basic_checks.(js|py)` and `test.sh` if referenced).
+      - Manual check instructions at a high level.
+  - Open `tests/basic_checks.(js|py)`:
+    - Confirm script:
+      - Calls `GET /agents`, `GET /metrics`, `GET /costs`, `GET /approvals`.
+      - Creates at least one task via `POST /agents/:id/tasks`.
+      - Triggers at least start/stop or retry on that task’s agent.
+      - Performs simple assertions on HTTP status codes and response JSON structure.
+      - Prints clear “PASS” / “FAIL” messages per step.
+      - Exits with non-zero status on failure.
+      - Uses minimal dependencies (e.g., Python `requests` only, or Node standard `fetch`/`node-fetch`).
+  - Open `tests/test_scenarios.md`:
+    - Confirm it documents manual scenarios for:
+      - Agent control flow (Start/Stop/Retry, Assign Task, log viewing).
+      - Approval flow (seeing pending approval, approve, reject, effect on agent/task).
+      - Metrics and cost sanity (numbers change when tasks run and consume tokens).
+    - Check steps are beginner-friendly and sequential.
+  - Open `tests/UX_NOTES.md`:
+    - Confirm it contains:
+      - At least 3 described screenshots (file paths or descriptions).
+      - Notes about clarity of labels, discoverability of controls, and any confusing areas.
+      - Suggestions for possible UX improvements.
+
+- Manual runtime checks (T1 & basic flows):
+  - Backend:
+    - Follow `backend/README.md` instructions to install dependencies and run the server.
+    - Confirm console/log output shows server listening on configured port.
+  - Frontend:
+    - Follow `frontend/README.md` instructions to serve the frontend.
+    - Visit dashboard URL (e.g., `http://localhost:3000` or specified):
+      - Open browser devtools console:
+        - Ensure no uncaught JS errors on load.
+      - Confirm Tailwind styling:
+        - Look for styled buttons, cards, and typography (not plain browser default).
+      - Confirm agent list appears within a couple of seconds (assuming seeded data).
+      - Click multiple agents to verify detail/logs panel updates and selected row is visually highlighted.
+      - Resize browser to narrow width (~375px):
+        - Check sections stack vertically and remain usable.
+  - Real-time behavior:
+    - With dashboard open, trigger actions via UI or backend (e.g., basic_checks script):
+      - Observe agent status, task info, and logs updating without page refresh.
+    - Temporarily stop backend:
+      - Confirm the frontend’s real-time client handles disconnect without throwing persistent errors.
+    - Restart backend:
+      - Confirm the frontend reconnects (within the implemented retry window) and resumes receiving updates.
+
+- Cross-check EVENTS.md vs implementation:
+  - For each event type documented in `backend/EVENTS.md`:
+    - Locate the emission in code (`events.(js|py)`, route handlers, or models).
+    - Verify:
+      - Event name matches exactly.
+      - Payload fields match documented schema.
+      - Emitted on all expected state transitions (e.g., task start/complete/fail, approval changes).
+
+- Final acceptance checklist:
+  - All required files exist and are non-empty.
+  - Automated script (`basic_checks` and `test.sh`) runs successfully against a clean, running instance.
+  - Manual scenarios from `tests/test_scenarios.md` are executable and pass.
+  - UX criteria in TEST.md (labels, discoverability) are met based on `UX_NOTES.md` and hands-on use.
+  - Any deviations or missing aspects are documented separately (outside this test plan) for follow-up.

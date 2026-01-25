@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rotary Engine Explorer - Prototype Shell</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-container">
+      <div class="logo">Rotary Engine Explorer</div>
+      <button class="nav-toggle" aria-label="Toggle navigation">
+        ☰
+      </button>
+      <nav class="nav-links">
+        <a href="#overview" class="nav-link active">Overview</a>
+        <a href="#how-it-works" class="nav-link">How It Works</a>
+        <a href="#simulation" class="nav-link">Simulation</a>
+        <a href="#glossary" class="nav-link">Glossary</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Overview Page -->
+    <section id="overview" class="page page-active">
+      <section class="hero">
+        <div class="hero-text">
+          <h1>Understand the Mazda 13B Rotary Engine</h1>
+          <p>
+            Explore how a rotary (Wankel) engine works through explanations, visualizations,
+            and simplified simulation of tuning choices and risks.
+          </p>
+          <div class="hero-actions">
+            <button class="btn primary" data-target="#how-it-works">Start with the Basics</button>
+            <button class="btn secondary" data-target="#simulation">Jump to Simulation</button>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="hero-diagram-card">
+            <div class="hero-diagram-placeholder">
+              13B Layout Diagram<br>(static placeholder)
+            </div>
+            <p class="hero-diagram-caption">
+              Simplified view of rotor, housing, and eccentric shaft. In the full Blazor app, this
+              will be a richer diagram from <code>wwwroot</code>.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-section">
+        <h2>What is a Rotary Engine?</h2>
+        <p>
+          A rotary (Wankel) engine uses a triangular rotor spinning inside a specially shaped housing
+          instead of pistons moving up and down. Each face of the rotor forms a chamber that moves
+          through intake, compression, combustion, and exhaust as the rotor orbits.
+        </p>
+      </section>
+
+      <section class="content-section">
+        <h2>Why This Simulator?</h2>
+        <div class="columns-3">
+          <div class="card simple">
+            <h3>Enthusiasts</h3>
+            <ul>
+              <li>See how rotor motion creates power strokes.</li>
+              <li>Connect common mods to engine behavior.</li>
+            </ul>
+          </div>
+          <div class="card simple">
+            <h3>Students & Learners</h3>
+            <ul>
+              <li>Link thermodynamics concepts to real hardware.</li>
+              <li>Compare rotary operation to piston engines.</li>
+            </ul>
+          </div>
+          <div class="card simple">
+            <h3>Builders & Tinkerers</h3>
+            <ul>
+              <li>Experiment with boost, AFR, and timing.</li>
+              <li>See wear, heat, and detonation trends.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-section">
+        <h2>What You’ll Learn</h2>
+        <div class="columns-3">
+          <div class="feature-box">
+            <h3>Rotary Basics</h3>
+            <p>Rotor geometry, housing shape, eccentric shaft role, and the four phases of the cycle.</p>
+          </div>
+          <div class="feature-box">
+            <h3>Visualization</h3>
+            <p>Animated rotor motion, moving chambers, and color-coded heat distribution.</p>
+          </div>
+          <div class="feature-box">
+            <h3>Experiment & Explore</h3>
+            <p>Adjust simple parameters and immediately see their impact on wear, heat, and risk.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-section callout">
+        <h2>Did you know?</h2>
+        <p>
+          In a typical Mazda 13B, each rotor face completes a power stroke for every revolution
+          of the eccentric shaft, giving a smooth, high‑revving character compared to many piston engines.
+        </p>
+      </section>
+    </section>
+
+    <!-- How It Works Page -->
+    <section id="how-it-works" class="page">
+      <header class="page-header">
+        <h1>How a Rotary Engine Works</h1>
+        <p>Step through the four phases of the cycle and see where key components live.</p>
+      </header>
+
+      <section class="how-layout">
+        <div class="how-stepper">
+          <h2>Phases of the Cycle</h2>
+          <ol class="phase-list">
+            <li class="phase-item active" data-phase="intake">
+              <h3>1. Intake</h3>
+              <p>Fresh air‑fuel mixture is drawn into the chamber as the rotor moves away from the intake port.</p>
+            </li>
+            <li class="phase-item" data-phase="compression">
+              <h3>2. Compression</h3>
+              <p>The chamber volume shrinks, squeezing the mixture as the rotor turns.</p>
+            </li>
+            <li class="phase-item" data-phase="combustion">
+              <h3>3. Combustion</h3>
+              <p>Ignition sparks the compressed mixture, pushing the rotor and creating useful work.</p>
+            </li>
+            <li class="phase-item" data-phase="exhaust">
+              <h3>4. Exhaust</h3>
+              <p>Burned gases exit through the exhaust port as the chamber sweeps past it.</p>
+            </li>
+          </ol>
+          <div class="how-controls">
+            <button class="btn primary" id="play-cycle">Play cycle</button>
+            <button class="btn secondary" id="pause-cycle">Pause</button>
+          </div>
+        </div>
+
+        <div class="how-visual-panel">
+          <h2>Rotor & Housing View</h2>
+          <div class="engine-diagram">
+            <div class="engine-diagram-inner" id="how-diagram">
+              <div class="housing-outline"></div>
+              <div class="rotor-shape"></div>
+              <div class="phase-label" id="phase-label">Intake</div>
+            </div>
+          </div>
+          <p class="diagram-caption">
+            This simplified diagram stands in for the animated SVG/canvas visualization in the Blazor app.
+            The highlighted label shows the currently selected phase.
+          </p>
+        </div>
+      </section>
+
+      <section class="content-section">
+        <h2>Key Components</h2>
+        <div class="columns-3">
+          <div class="card simple info-pin">
+            <h3>Rotor & Eccentric Shaft</h3>
+            <p>
+              The triangular rotor rides on an eccentric shaft. As the shaft spins, the rotor orbits,
+              changing chamber volume and driving the output.
+            </p>
+          </div>
+          <div class="card simple info-pin">
+            <h3>Seals (Apex, Side, Corner)</h3>
+            <p>
+              Seals at the rotor tips and sides keep combustion gases contained. Worn or chipped seals
+              cause power loss, misfires, or engine failure.
+            </p>
+          </div>
+          <div class="card simple info-pin">
+            <h3>Common Failure Modes</h3>
+            <p>
+              Overheating, detonation, and lubrication issues can damage seals and housings.
+              You can explore how risky conditions arise in the Simulation page.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-section callout">
+        <h2>Did you know?</h2>
+        <p>
+          Because each rotor face goes through all four phases every revolution, a two‑rotor engine can
+          feel surprisingly smooth for its size and displacement.
+        </p>
+      </section>
+    </section>
+
+    <!-- Simulation Page -->
+    <section id="simulation" class="page">
+      <header class="page-header">
+        <h1>Interactive 13B Simulation</h1>
+        <p>Adjust high‑level parameters and see how they influence wear, heat, and overall risk.</p>
+      </header>
+
+      <section class="disclaimer-banner" id="disclaimer">
+        <div class="disclaimer-main">
+          <strong>Educational simulation only – not a tuning recommendation tool.</strong>
+          <button class="disclaimer-toggle" aria-expanded="false">More details</button>
+        </div>
+        <div class="disclaimer-details" hidden>
+          <p>
+            This simulator uses simplified, approximate models to illustrate general trends.
+            It does not represent manufacturer data, professional tuning advice, or precise physics.
+            Always consult experienced professionals before modifying an engine.
+          </p>
+        </div>
+      </section>
+
+      <section class="simulation-layout">
+        <!-- Left: Controls -->
+        <aside class="sim-column sim-left">
+          <section class="card">
+            <h2>Presets</h2>
+            <div class="preset-options">
+              <label class="preset-pill">
+                <input type="radio" name="preset" value="stock" checked>
+                <span>Stock street</span>
+              </label>
+              <label class="preset-pill">
+                <input type="radio" name="preset" value="mild">
+                <span>Mild street port</span>
+              </label>
+              <label class="preset-pill">
+                <input type="radio" name="preset" value="track">
+                <span>Track / Drift</span>
+              </label>
+            </div>
+            <p id="preset-description" class="helper-text">
+              Stock street: low or no boost, conservative timing, designed for reliability.
+            </p>
+          </section>
+
+          <section class="card">
+            <h2>Engine Setup & Controls</h2>
+            <div class="control-group">
+              <label for="boost">
+                Boost pressure
+                <span class="unit">(psi)</span>
+              </label>
+              <div class="control-row">
+                <input type="range" id="boost" min="0" max="25" value="0">
+                <input type="number" id="boost-input" min="0" max="25" value="0">
+              </div>
+              <div class="range-hints">
+                <span class="safe-band">0–10 psi: typical conservative boost</span>
+              </div>
+              <p class="helper-text">
+                0 = naturally aspirated. Higher boost can increase power and stress on seals and housings.
+              </p>
+            </div>
+
+            <div class="control-group">
+              <label for="afr">
+                Air–Fuel Ratio (AFR)
+                <span class="unit">(:1)</span>
+              </label>
+              <div class="control-row">
+                <input type="range" id="afr" min="10" max="16" step="0.1" value="11.5">
+                <output id="afr-output">11.5:1</output>
+              </div>
+              <div class="range-hints">
+                <span class="safe-band">~11–12.5:1: safer under boost</span>
+                <span class="warning-band">>13:1: leaner, higher heat</span>
+              </div>
+              <p class="helper-text">
+                Too lean or too rich can raise temperatures and risk. Boosted engines usually run richer than
+                naturally aspirated engines.
+              </p>
+            </div>
+
+            <div class="control-group">
+              <span class="label-block">
+                Ignition timing
+              </span>
+              <div class="pill-row" id="timing-presets">
+                <label class="pill">
+                  <input type="radio" name="timing" value="-5">
+                  <span>Retarded</span>
+                </label>
+                <label class="pill">
+                  <input type="radio" name="timing" value="0" checked>
+                  <span>Stock</span>
+                </label>
+                <label class="pill">
+                  <input type="radio" name="timing" value="5">
+                  <span>Advanced</span>
+                </label>
+              </div>
+              <div class="control-row">
+                <label for="timing-deg" class="inline-label">Offset (° from stock)</label>
+                <input type="range" id="timing-deg" min="-5" max="5" value="0">
+                <output id="timing-output">0°</output>
+              </div>
+              <p class="helper-text">
+                More advanced timing can improve response but increases knock and heat risk, especially with
+                high boost and lean mixtures.
+              </p>
+            </div>
+
+            <div class="control-group">
+              <label for="rpm">
+                RPM
+                <span class="unit">(rev/min)</span>
+              </label>
+              <div class="control-row">
+                <input type="range" id="rpm" min="500" max="9000" step="100" value="3000">
+                <output id="rpm-output">3,000 rpm</output>
+              </div>
+              <p class="helper-text">
+                Current simulation RPM affects both calculated stress and animation speed. High, sustained RPM
+                greatly increases wear and heat.
+              </p>
+            </div>
+
+            <div class="control-group">
+              <label for="seal-type">
+                Seal type / material
+              </label>
+              <select id="seal-type">
+                <option value="stock">Stock (OEM steel)</option>
+                <option value="performance">Performance (upgraded)</option>
+                <option value="race">Race-only</option>
+              </select>
+              <p class="helper-text">
+                Stronger seals can tolerate higher loads but may need more warm‑up and careful tuning.
+              </p>
+            </div>
+          </section>
+
+          <section class="card help-box">
+            <button class="help-toggle" aria-expanded="false">
+              What do these controls represent?
+            </button>
+            <div class="help-content" hidden>
+              <p>
+                These sliders and options are simplified stand‑ins for more complex tuning parameters.
+                They are meant to show <strong>trends</strong>: higher boost and RPM increase stress, while
+                lean mixtures and advanced timing increase detonation risk.
+              </p>
+              <p>
+                For definitions of AFR, apex seal, detonation, and other terms, see the Glossary page.
+              </p>
+            </div>
+          </section>
+        </aside>
+
+        <!-- Right: Visualization & Outputs -->
+        <section class="sim-column sim-right">
+          <section class="card">
+            <div class="card-header-row">
+              <div>
+                <h2>Rotor Motion &amp; Heat Map</h2>
+                <p class="subtitle">RPM-driven animation speed with color‑coded heat state.</p>
+              </div>
+              <div class="rpm-badge">
+                <span id="rpm-badge-label">3,000 rpm</span>
+              </div>
+            </div>
+
+            <div class="visualizer-wrapper">
+              <div class="visualizer" id="engine-visualizer">
+                <div class="visual-housing"></div>
+                <div class="visual-rotor"></div>
+                <div class="visual-chamber visual-chamber-1"></div>
+                <div class="visual-chamber visual-chamber-2"></div>
+                <div class="visual-chamber visual-chamber-3"></div>
+                <div class="visual-phase-tag" id="visual-phase-tag">Intake</div>
+              </div>
+            </div>
+            <div class="visualizer-controls">
+              <button class="btn primary" id="vis-play">Play</button>
+              <button class="btn secondary" id="vis-pause">Pause</button>
+              <button class="btn tertiary" id="vis-step">Advance one phase</button>
+              <span class="hint">Animation speed is tied to the RPM slider.</span>
+            </div>
+          </section>
+
+          <section class="card metrics-grid">
+            <div class="metric-card" id="wear-card">
+              <div class="metric-header">
+                <span class="metric-icon">⚙</span>
+                <div>
+                  <h3>Wear level</h3>
+                  <p class="metric-subtitle">Estimated seal and bearing wear index.</p>
+                </div>
+              </div>
+              <div class="metric-body">
+                <div class="meter-bar">
+                  <div class="meter-fill" id="wear-meter"></div>
+                </div>
+                <div class="metric-values">
+                  <span>Index: <span id="wear-index">0.20</span></span>
+                  <span class="metric-label" id="wear-label">Low</span>
+                </div>
+                <p class="metric-note">
+                  High RPM and boost increase wear on apex seals, side seals, and bearings over time.
+                </p>
+              </div>
+            </div>
+
+            <div class="metric-card" id="heat-card">
+              <div class="metric-header">
+                <span class="metric-icon">🌡</span>
+                <div>
+                  <h3>Thermal stress</h3>
+                  <p class="metric-subtitle">Relative heat load on housings and rotor.</p>
+                </div>
+              </div>
+              <div class="metric-body">
+                <div class="meter-bar heat">
+                  <div class="meter-fill" id="heat-meter"></div>
+                </div>
+                <div class="metric-values">
+                  <span>Index: <span id="heat-index">0.25</span></span>
+                  <span class="metric-label" id="heat-label">Cool</span>
+                </div>
+                <p class="metric-note">
+                  Lean mixtures and high RPM/boost push combustion and coolant temperatures higher.
+                </p>
+              </div>
+            </div>
+
+            <div class="metric-card" id="risk-card">
+              <div class="metric-header">
+                <span class="metric-icon">⚠</span>
+                <div>
+                  <h3>Overall risk</h3>
+                  <p class="metric-subtitle">Combined detonation and stress assessment.</p>
+                </div>
+              </div>
+              <div class="metric-body">
+                <div class="risk-badge" id="risk-badge">
+                  <span id="risk-label">Safe</span>
+                  <span class="risk-detail" id="risk-detail">Low combined risk</span>
+                </div>
+                <p class="metric-note">
+                  High boost, lean AFR, and advanced timing together raise detonation (knock) risk and may
+                  quickly damage a rotary engine.
+                </p>
+                <p class="metric-note small" id="detonation-tendency">
+                  Detonation tendency: Low
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2>Why is this risky?</h2>
+            <div id="risk-summary">
+              <p>
+                With the current settings, the simulator will summarize key contributors to stress and risk here.
+              </p>
+            </div>
+            <p class="helper-text">
+              These explanations capture trends only and are not precise tuning advice. Real engines are affected
+              by many additional factors (fuel quality, cooling system, ignition system health, and more).
+            </p>
+          </section>
+        </section>
+      </section>
+    </section>
+
+    <!-- Glossary Page -->
+    <section id="glossary" class="page">
+      <header class="page-header">
+        <h1>Rotary Glossary</h1>
+        <p>Key terms used throughout the simulator, in approachable language.</p>
+      </header>
+
+      <section class="card">
+        <div class="glossary-search-row">
+          <input type="search" id="glossary-search" placeholder="Search terms (e.g., apex seal, AFR, detonation)">
+        </div>
+        <div class="glossary-list" id="glossary-list">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      Educational, simplified simulation – not a tuning recommendation tool.
+      See the full disclaimer in the Simulation section.
+    </p>
+    <p class="footer-links">
+      <a href="#overview">About this project</a>
+      <span>•</span>
+      <a href="#simulation">Educational disclaimer</a>
+    </p>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>
