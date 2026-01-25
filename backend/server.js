@@ -26,6 +26,7 @@ const frontendDir = path.join(__dirname, '..', 'frontend');
 app.use(express.static(frontendDir));
 
 const projectsRoot = path.join(__dirname, '..', 'projects');
+const tasksRoot = path.join(__dirname, '..', 'tasks');
 fs.mkdirSync(projectsRoot, { recursive: true });
 
 const projects = new Map(); // projectId -> projectState
@@ -103,7 +104,8 @@ function createProjectState({ name, type }) {
     updatedAt: Date.now(),
     runStatus: 'idle',
     lastRunAt: null,
-    lastRunResult: null
+    lastRunResult: null,
+    activeTaskFile: null
   };
 
   if (project.type === 'blazor') {
@@ -218,7 +220,8 @@ function loadProjectFromDisk(projectId) {
       rootPath: data.project.rootPath || projectDir(projectId),
       runStatus: data.project.runStatus || 'idle',
       lastRunAt: data.project.lastRunAt || null,
-      lastRunResult: data.project.lastRunResult || null
+      lastRunResult: data.project.lastRunResult || null,
+      activeTaskFile: data.project.activeTaskFile || null
     },
     agents,
     tasks,
@@ -268,6 +271,27 @@ function resolvePythonPath() {
   return 'python3';
 }
 
+function listTaskFiles() {
+  if (!fs.existsSync(tasksRoot)) return [];
+  return fs
+    .readdirSync(tasksRoot)
+    .filter((f) => f.toLowerCase().endsWith('.md'))
+    .map((f) => {
+      const fullPath = path.join(tasksRoot, f);
+      const content = fs.readFileSync(fullPath, 'utf-8');
+      const titleLine = content.split(/\r?\n/).find((line) => line.trim().length > 0) || f;
+      return { name: f, title: titleLine.replace(/^#\s*/, '').trim() };
+    });
+}
+
+function readTaskFile(taskFile) {
+  if (!taskFile) return null;
+  const safeName = path.basename(taskFile);
+  const fullPath = path.join(tasksRoot, safeName);
+  if (!fs.existsSync(fullPath)) return null;
+  return { name: safeName, content: fs.readFileSync(fullPath, 'utf-8') };
+}
+
 function ensureBlazorApp(state) {
   if (state.project.type !== 'blazor') return { ok: true };
   const appDir = path.join(state.project.rootPath, 'app');
@@ -291,7 +315,7 @@ function ensureBlazorApp(state) {
   return { ok: true };
 }
 
-function startProjectRun(state) {
+function startProjectRun(state, options = {}) {
   const projectId = state.project.id;
   if (projectRunners.has(projectId)) {
     return { ok: false, error: 'Project is already running' };
@@ -305,7 +329,18 @@ function startProjectRun(state) {
 
   const python = resolvePythonPath();
   const scriptPath = path.join(__dirname, '..', 'multi_agent_workflow.py');
-  const args = [scriptPath, '--project-root', state.project.rootPath, '--task-from-agents'];
+  const args = [scriptPath, '--project-root', state.project.rootPath];
+  if (options.taskFile) {
+    const task = readTaskFile(options.taskFile);
+    if (!task) {
+      return { ok: false, error: 'Task file not found' };
+    }
+    args.push('--task-file', task.name);
+    state.project.activeTaskFile = task.name;
+  } else {
+    args.push('--task-from-agents');
+    state.project.activeTaskFile = null;
+  }
   const blazorInit = ensureBlazorApp(state);
   if (!blazorInit.ok) {
     addLog(state, 'runner', null, `[blazor init] ${blazorInit.error}`);
@@ -341,7 +376,8 @@ function startProjectRun(state) {
   broadcastEvent(projectId, 'project_run_status', {
     status: state.project.runStatus,
     lastRunAt: state.project.lastRunAt,
-    lastRunResult: state.project.lastRunResult
+    lastRunResult: state.project.lastRunResult,
+    activeTaskFile: state.project.activeTaskFile
   });
   if (orchestrator) broadcastEvent(projectId, 'agent_updated', orchestrator);
   addLog(state, 'runner', null, 'Run started.');
@@ -403,7 +439,8 @@ function startProjectRun(state) {
     broadcastEvent(projectId, 'project_run_status', {
       status: state.project.runStatus,
       lastRunAt: state.project.lastRunAt,
-      lastRunResult: state.project.lastRunResult
+      lastRunResult: state.project.lastRunResult,
+      activeTaskFile: state.project.activeTaskFile
     });
     addLog(state, 'runner', null, `[spawn error] ${err.message}`);
   });
@@ -737,6 +774,7 @@ app.get('/projects', (req, res) => {
     runStatus: state.project.runStatus,
     lastRunAt: state.project.lastRunAt,
     lastRunResult: state.project.lastRunResult,
+    activeTaskFile: state.project.activeTaskFile,
     agentCount: state.agents.size
   }));
   res.json(list);
@@ -753,6 +791,20 @@ app.post('/projects', (req, res) => {
   res.status(201).json(state.project);
 });
 
+// ---------------------------------------------------------------------------
+// Routes: Task templates (global)
+// ---------------------------------------------------------------------------
+
+app.get('/tasks', (req, res) => {
+  res.json(listTaskFiles());
+});
+
+app.get('/tasks/:name', (req, res) => {
+  const task = readTaskFile(req.params.name);
+  if (!task) return res.status(404).json({ error: 'Task not found' });
+  res.json(task);
+});
+
 app.get('/projects/:projectId', (req, res) => {
   const state = getProjectOr404(req, res);
   if (!state) return;
@@ -765,7 +817,8 @@ app.get('/projects/:projectId', (req, res) => {
 app.post('/projects/:projectId/run', (req, res) => {
   const state = getProjectOr404(req, res);
   if (!state) return;
-  const result = startProjectRun(state);
+  const taskFile = req.body && req.body.taskFile ? String(req.body.taskFile) : null;
+  const result = startProjectRun(state, { taskFile });
   if (!result.ok) {
     return res.status(400).json({ error: result.error });
   }

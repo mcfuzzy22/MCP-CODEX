@@ -112,6 +112,8 @@ const state = {
   projects: [],
   currentProjectId: null,
   currentProject: null,
+  taskTemplates: [],
+  selectedTaskFile: null,
   agents: [],
   selectedAgentId: null,
   agentDetails: {}, // id -> full detail (may include tasks, logs)
@@ -129,6 +131,7 @@ const state = {
 const connectionDot = document.getElementById('connection-dot');
 const connectionText = document.getElementById('connection-text');
 const projectSelect = document.getElementById('project-select');
+const taskSelect = document.getElementById('task-select');
 const projectNewBtn = document.getElementById('project-new-btn');
 const projectRunBtn = document.getElementById('project-run-btn');
 const projectRunStatus = document.getElementById('project-run-status');
@@ -146,6 +149,8 @@ const projectMemorySave = document.getElementById('project-memory-save');
 const projectMemoryStatus = document.getElementById('project-memory-status');
 const agentDiaryContent = document.getElementById('agent-diary-content');
 const agentDiaryTitle = document.getElementById('agent-diary-title');
+const taskBriefName = document.getElementById('task-brief-name');
+const taskBriefContent = document.getElementById('task-brief-content');
 
 const agentsTableBody = document.getElementById('agents-table-body');
 const agentsLoadingRow = document.getElementById('agents-loading-row');
@@ -231,12 +236,57 @@ function renderProjectSelect() {
   });
 }
 
+function renderTaskSelect() {
+  if (!taskSelect) return;
+  taskSelect.innerHTML = '';
+  const defaultOpt = document.createElement('option');
+  defaultOpt.value = '';
+  defaultOpt.textContent = 'Use AGENTS.md';
+  taskSelect.appendChild(defaultOpt);
+
+  state.taskTemplates.forEach((task) => {
+    const opt = document.createElement('option');
+    opt.value = task.name;
+    opt.textContent = task.title || task.name;
+    if (task.name === state.selectedTaskFile) opt.selected = true;
+    taskSelect.appendChild(opt);
+  });
+}
+
 function renderProjectRunStatus() {
   if (!projectRunStatus) return;
   const status = state.currentProject?.runStatus || 'idle';
   projectRunStatus.textContent = status;
   if (!projectRunBtn) return;
   projectRunBtn.disabled = status === 'running';
+}
+
+async function loadTasks() {
+  try {
+    const tasks = await fetchJSON('/tasks');
+    state.taskTemplates = tasks || [];
+    renderTaskSelect();
+  } catch (err) {
+    state.taskTemplates = [];
+    renderTaskSelect();
+  }
+}
+
+async function loadTaskBrief(taskFile) {
+  if (!taskBriefContent || !taskBriefName) return;
+  if (!taskFile) {
+    taskBriefName.textContent = 'Using AGENTS.md';
+    taskBriefContent.value = 'No task template selected. The run will use AGENTS.md.';
+    return;
+  }
+  try {
+    const data = await fetchJSON(`/tasks/${encodeURIComponent(taskFile)}`);
+    taskBriefName.textContent = data.name || taskFile;
+    taskBriefContent.value = data.content || '';
+  } catch (err) {
+    taskBriefName.textContent = taskFile;
+    taskBriefContent.value = 'Unable to load task template.';
+  }
 }
 
 function renderMetrics() {
@@ -306,6 +356,9 @@ async function loadProjectInfo() {
   try {
     const data = await fetchJSON(`/projects/${encodeURIComponent(state.currentProjectId)}`);
     state.currentProject = data.project || null;
+    state.selectedTaskFile = state.currentProject?.activeTaskFile || null;
+    renderTaskSelect();
+    await loadTaskBrief(state.selectedTaskFile);
     renderProjectRunStatus();
   } catch (err) {
     state.currentProject = null;
@@ -871,13 +924,22 @@ projectSelect.addEventListener('change', async (event) => {
   await setCurrentProject(projectId);
 });
 
+taskSelect.addEventListener('change', async (event) => {
+  const taskFile = event.target.value || null;
+  state.selectedTaskFile = taskFile;
+  await loadTaskBrief(taskFile);
+});
+
 projectMemorySave.addEventListener('click', saveProjectMemory);
 
 projectRunBtn.addEventListener('click', async () => {
   if (!state.currentProjectId) return;
   projectRunBtn.disabled = true;
   try {
-    await fetchProjectJSON('/run', { method: 'POST' });
+    await fetchProjectJSON('/run', {
+      method: 'POST',
+      body: JSON.stringify({ taskFile: state.selectedTaskFile }),
+    });
     showToast('Project run started.', 'success');
     await loadProjectInfo();
   } catch (err) {
@@ -1012,6 +1074,12 @@ function handleEvent(type, payload) {
       state.currentProject.runStatus = payload.status || 'idle';
       state.currentProject.lastRunAt = payload.lastRunAt || null;
       state.currentProject.lastRunResult = payload.lastRunResult || null;
+      if (payload.activeTaskFile !== undefined) {
+        state.currentProject.activeTaskFile = payload.activeTaskFile || null;
+        state.selectedTaskFile = state.currentProject.activeTaskFile || null;
+        renderTaskSelect();
+        loadTaskBrief(state.selectedTaskFile);
+      }
       renderProjectRunStatus();
       break;
     }
@@ -1024,10 +1092,13 @@ function handleEvent(type, payload) {
 
 document.addEventListener('DOMContentLoaded', () => {
   renderConnectionStatus();
-  loadProjects().then(async () => {
-    renderProjectSelect();
-    if (state.currentProjectId) {
-      await refreshAll();
-    }
+  loadTasks().then(() => {
+    renderTaskSelect();
+    loadProjects().then(async () => {
+      renderProjectSelect();
+      if (state.currentProjectId) {
+        await refreshAll();
+      }
+    });
   });
 });

@@ -380,6 +380,33 @@ def _write_text(path: str, content: str) -> None:
         handle.write(content)
 
 
+def _find_repo_root(start_path: str) -> str | None:
+    current = os.path.abspath(start_path)
+    for _ in range(6):
+        if os.path.isdir(os.path.join(current, "tasks")) and os.path.isdir(
+            os.path.join(current, "docs")
+        ):
+            return current
+        parent = os.path.dirname(current)
+        if parent == current:
+            break
+        current = parent
+    return None
+
+
+def _append_changelog(note: str) -> None:
+    repo_root = _find_repo_root(os.getcwd())
+    if not repo_root:
+        return
+    changelog_path = os.path.join(repo_root, "logs", "CHANGELOG.md")
+    timestamp = datetime.utcnow().strftime("%Y-%m-%d")
+    line = f"- {timestamp} {note}\n"
+    if not os.path.exists(changelog_path):
+        _write_text(changelog_path, "# Changelog\n\n## Unreleased\n")
+    with open(changelog_path, "a", encoding="utf-8") as handle:
+        handle.write(line)
+
+
 def _require_approval(role: str, written: list[str]) -> None:
     if not APPROVAL_REQUIRED:
         return
@@ -430,12 +457,16 @@ def _blazor_constraints() -> str:
     )
 
 
+def _is_blazor_project() -> bool:
+    return os.environ.get("PROJECT_TYPE", "").strip().lower() == "blazor"
+
+
 def _common_file_instructions() -> str:
     return "Do not include any extra text outside the file blocks. Do not wrap file contents in triple backticks."
 
 
 # Uncomment to suppress logging
-+#logging.getLogger().addFilter(_SuppressMcpValidationWarnings())
+#logging.getLogger().addFilter(_SuppressMcpValidationWarnings())
 
 load_dotenv(override=True)
 _setup_logging()
@@ -448,6 +479,11 @@ async def main() -> None:
         "--task-from-agents",
         action="store_true",
         help="Use AGENTS.md as the task list input.",
+    )
+    parser.add_argument(
+        "--task-file",
+        default=None,
+        help="Use a task template file from the repo tasks/ folder.",
     )
     args, _ = parser.parse_known_args()
 
@@ -486,10 +522,14 @@ async def main() -> None:
             "You are the Frontend Developer.\n"
             "Read the provided AGENT_TASKS.md and design/design_spec.md content. Implement exactly what is described.\n\n"
             "Deliverables:\n"
-            "- frontend/index.html - main page structure\n"
-            "- frontend/styles.css or inline styles if specified\n"
-            "- frontend/main.js or frontend/game.js if specified\n\n"
+            "- If this is a Blazor project: update files inside app/ (Pages, Shared, wwwroot).\n"
+            "- Otherwise: create frontend/index.html, frontend/styles.css, frontend/main.js.\n\n"
             "Output format (required):\n"
+            "### FILE: app/Pages/Home.razor\n"
+            "<content>\n"
+            "### FILE: app/wwwroot/css/app.css\n"
+            "<content>\n\n"
+            "OR (non-Blazor):\n"
             "### FILE: frontend/index.html\n"
             "<content>\n"
             "### FILE: frontend/styles.css\n"
@@ -510,6 +550,7 @@ async def main() -> None:
             "Deliverables:\n"
             "- backend/package.json - include a start script if requested\n"
             "- backend/server.js - implement the API endpoints and logic exactly as specified\n\n"
+            "If this is a Blazor project and no backend is needed, state that in README.md and do not create backend files.\n\n"
             "Output format (required):\n"
             "### FILE: backend/package.json\n"
             "<content>\n"
@@ -591,7 +632,24 @@ Constraints:
 - Localhost only for runtime, but structure should be deployable later.
 """
 
-    if args.task_from_agents:
+    if args.task_file:
+        repo_root = _find_repo_root(os.getcwd())
+        task_name = os.path.basename(args.task_file)
+        task_path = (
+            os.path.join(repo_root, "tasks", task_name) if repo_root else None
+        )
+        if task_path and os.path.exists(task_path):
+            task_text = _read_text(task_path)
+            task_list = (
+                "Goal: Execute the task described below.\n\n"
+                f"Task File: {task_name}\n\n"
+                f"{task_text}\n"
+                "\nRequired output:\n"
+                "- A README.md in the project root with setup and run instructions.\n"
+                "- Update logs/CHANGELOG.md with a summary line for this run.\n"
+                f"{_blazor_constraints()}\n"
+            )
+    elif args.task_from_agents:
         agents_path = os.path.join(os.getcwd(), "AGENTS.md")
         if os.path.exists(agents_path):
             agents_text = _read_text(agents_path)
@@ -603,6 +661,7 @@ Constraints:
                     "\nRequired output:\n"
                     "- A README.md in the project root with setup and run instructions.\n"
                     "- Summarize where the frontend/backend live and how to start them.\n"
+                    "- Update logs/CHANGELOG.md with a summary line for this run.\n"
                     f"{_blazor_constraints()}\n"
                 )
 
@@ -641,6 +700,14 @@ Constraints:
 
     design_spec = _read_text("design/design_spec.md")
 
+    blazor_guard = ""
+    if _is_blazor_project():
+        blazor_guard = (
+            "\nBlazor Guardrails:\n"
+            "- ONLY write files under app/.\n"
+            "- Do NOT write to frontend/.\n"
+            "- Update app/Pages/* and app/wwwroot/* for UI.\n"
+        )
     frontend_payload = (
         "REQUIREMENTS.md:\n"
         f"{requirements}\n\n"
@@ -648,6 +715,7 @@ Constraints:
         f"{agent_tasks}\n\n"
         "design/design_spec.md:\n"
         f"{design_spec}\n"
+        f"{blazor_guard}\n"
     )
     frontend_input = _base_input_items() + _user_message(frontend_payload)
     _agent_status("frontend", "running", "Building UI")
@@ -735,6 +803,9 @@ Constraints:
                 "````",
             ]
         _write_text(readme_path, "\n".join(readme_lines) + "\n")
+
+    project_id = os.environ.get("PROJECT_ID", os.path.basename(os.getcwd()))
+    _append_changelog(f"Run completed for {project_id}.")
 
 
 if __name__ == "__main__":
