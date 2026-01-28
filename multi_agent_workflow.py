@@ -418,6 +418,19 @@ def _read_schema_advice() -> str:
     return ""
 
 
+def _read_doc(path: str) -> str:
+    return _read_optional_text(os.path.join(os.getcwd(), "docs", path))
+
+
+def _docs_bundle(paths: list[str]) -> str:
+    sections: list[str] = []
+    for doc in paths:
+        content = _read_doc(doc)
+        if content:
+            sections.append(f"docs/{doc}:\n{content}")
+    return "\n\n".join(sections).strip()
+
+
 def _is_read_only_sql(sql: str) -> bool:
     statements = [s.strip() for s in sql.strip().split(";") if s.strip()]
     if not statements:
@@ -650,7 +663,7 @@ async def main() -> None:
             f"""{RECOMMENDED_PROMPT_PREFIX}"""
             "You are the Documentation Curator.\n"
             "Your job is to create a complete, minimal doc pack so other agents can execute without guessing.\n"
-            "Use the provided REQUIREMENTS.md, AGENT_TASKS.md, and Database Schema Advice.\n\n"
+            "Use the provided REQUIREMENTS.md, AGENT_TASKS.md, and existing docs/ references.\n\n"
             "If memory content is provided, keep it and append a new dated entry in memory/doc.md.\n\n"
             "Deliverables (keep concise, bullet-based):\n"
             "- docs/MVP.md (MVP scope + success criteria)\n"
@@ -776,7 +789,7 @@ async def main() -> None:
         instructions=(
             f"""{RECOMMENDED_PROMPT_PREFIX}"""
             "You are the Designer.\n"
-            "Your only source of truth is the provided REQUIREMENTS.md and AGENT_TASKS.md content.\n"
+            "Use the provided REQUIREMENTS.md, AGENT_TASKS.md, and any docs/ references provided.\n"
             "Do not assume anything that is not written there.\n\n"
             "Deliverables:\n"
             "- design/design_spec.md - UI/UX layout, screens, and visual notes.\n"
@@ -800,7 +813,7 @@ async def main() -> None:
         instructions=(
             f"""{RECOMMENDED_PROMPT_PREFIX}"""
             "You are the Frontend Developer.\n"
-            "Read the provided AGENT_TASKS.md and design/design_spec.md content. Implement exactly what is described.\n\n"
+            "Read the provided AGENT_TASKS.md, design/design_spec.md, and any docs/ references. Implement exactly what is described.\n\n"
             "Deliverables:\n"
             "- If this is a Blazor project: update files inside app/ (Pages, Shared, wwwroot).\n"
             "- Otherwise: create frontend/index.html, frontend/styles.css, frontend/main.js.\n\n"
@@ -830,7 +843,7 @@ async def main() -> None:
         instructions=(
             f"""{RECOMMENDED_PROMPT_PREFIX}"""
             "You are the Backend Developer.\n"
-            "Read the provided AGENT_TASKS.md and REQUIREMENTS.md content. Implement the backend endpoints described there.\n\n"
+            "Read the provided AGENT_TASKS.md, REQUIREMENTS.md, and any docs/ references. Implement the backend endpoints described there.\n\n"
             "Deliverables:\n"
             "- backend/package.json - include a start script if requested\n"
             "- backend/server.js - implement the API endpoints and logic exactly as specified\n\n"
@@ -855,7 +868,7 @@ async def main() -> None:
         instructions=(
             f"""{RECOMMENDED_PROMPT_PREFIX}"""
             "You are the Tester.\n"
-            "Read the provided AGENT_TASKS.md and TEST.md content. Verify that the outputs meet the acceptance criteria.\n\n"
+            "Read the provided AGENT_TASKS.md, TEST.md, and any docs/ references. Verify that the outputs meet the acceptance criteria.\n\n"
             "Deliverables:\n"
             "- tests/TEST_PLAN.md - bullet list of manual checks or automated steps as requested\n"
             "- tests/test.sh or a simple automated script if specified\n\n"
@@ -887,6 +900,7 @@ async def main() -> None:
             "  - Project name\n"
             "  - Required deliverables (exact file names and purpose)\n"
             "  - Key technical notes and constraints\n\n"
+            "Reference any existing docs/ files as sources of truth when available.\n\n"
             "Also maintain memory for this role. If memory content is provided, keep it and append a new dated entry.\n\n"
             "Output format (required):\n"
             "### FILE: REQUIREMENTS.md\n"
@@ -973,7 +987,18 @@ Constraints:
             f"{schema_advice}\n"
         )
 
+    pm_docs = _docs_bundle(
+        [
+            "VISION.md",
+            "ROADMAP.md",
+            "SCOPE_GUARDRAILS.md",
+            "RISKS.md",
+            "GLOSSARY.md",
+        ]
+    )
     pm_payload = f"{_memory_block('pm')}\n{task_list}"
+    if pm_docs:
+        pm_payload = f"{pm_payload}\n\nProject Docs:\n{pm_docs}\n"
     pm_input = _base_input_items() + _user_message(pm_payload)
     _agent_status("pm", "running", "Planning requirements")
     _agent_log("pm", "Starting requirements and task breakdown.")
@@ -990,6 +1015,24 @@ Constraints:
     agent_tasks = _read_text("AGENT_TASKS.md")
     test_plan = _read_text("TEST.md")
 
+    doc_docs = _docs_bundle(
+        [
+            "VISION.md",
+            "ROADMAP.md",
+            "SCOPE_GUARDRAILS.md",
+            "RISKS.md",
+            "GLOSSARY.md",
+            "DATA_MODEL.md",
+            "RULES_ENGINE.md",
+            "API.md",
+            "REALTIME.md",
+            "UI_UX.md",
+            "DOMAIN_ROTARY.md",
+            "INGESTION.md",
+            "MONETIZATION.md",
+            "RUNBOOK.md",
+        ]
+    )
     doc_payload = (
         f"{_memory_block('doc')}\n"
         "REQUIREMENTS.md:\n"
@@ -999,6 +1042,8 @@ Constraints:
         "Database Schema Advice:\n"
         f"{schema_advice or 'No schema advice file found.'}\n"
     )
+    if doc_docs:
+        doc_payload = f"{doc_payload}\n\nProject Docs:\n{doc_docs}\n"
     doc_input = _base_input_items() + _user_message(doc_payload)
     _agent_status("doc", "running", "Writing documentation pack")
     _agent_log("doc", "Generating docs and task templates.")
@@ -1010,6 +1055,14 @@ Constraints:
     _agent_log("doc", "Documentation pack written.")
     _require_approval("doc", "Documentation Curator", doc_written)
 
+    domain_docs = _docs_bundle(
+        [
+            "DOMAIN_ROTARY.md",
+            "WARNINGS.md",
+            "GLOSSARY.md",
+            "SCOPE_GUARDRAILS.md",
+        ]
+    )
     domain_payload = (
         f"{_memory_block('domain')}\n"
         "REQUIREMENTS.md:\n"
@@ -1017,6 +1070,8 @@ Constraints:
         "AGENT_TASKS.md:\n"
         f"{agent_tasks}\n"
     )
+    if domain_docs:
+        domain_payload = f"{domain_payload}\n\nProject Docs:\n{domain_docs}\n"
     domain_input = _base_input_items() + _user_message(domain_payload)
     _agent_status("domain", "running", "Summarizing domain knowledge")
     _agent_log("domain", "Creating domain notes.")
@@ -1028,6 +1083,14 @@ Constraints:
     _agent_log("domain", "Domain notes written.")
     _require_approval("domain", "Domain Expert", domain_written)
 
+    data_docs = _docs_bundle(
+        [
+            "DATA_MODEL.md",
+            "RULES_ENGINE.md",
+            "DOMAIN_ROTARY.md",
+            "SCOPE_GUARDRAILS.md",
+        ]
+    )
     data_payload = (
         f"{_memory_block('data')}\n"
         "REQUIREMENTS.md:\n"
@@ -1037,6 +1100,8 @@ Constraints:
         "Database Schema Advice:\n"
         f"{schema_advice or 'No schema advice file found.'}\n"
     )
+    if data_docs:
+        data_payload = f"{data_payload}\n\nProject Docs:\n{data_docs}\n"
     data_input = _base_input_items() + _user_message(data_payload)
     _agent_status("data", "running", "Building data model")
     _agent_log("data", "Creating migrations and seeds.")
@@ -1048,6 +1113,14 @@ Constraints:
     _agent_log("data", "Data model written.")
     _require_approval("data", "Data Modeler", data_written)
 
+    designer_docs = _docs_bundle(
+        [
+            "VISION.md",
+            "UI_UX.md",
+            "REALTIME.md",
+            "SCOPE_GUARDRAILS.md",
+        ]
+    )
     designer_payload = (
         f"{_memory_block('designer')}\n"
         "REQUIREMENTS.md:\n"
@@ -1055,6 +1128,8 @@ Constraints:
         "AGENT_TASKS.md:\n"
         f"{agent_tasks}\n"
     )
+    if designer_docs:
+        designer_payload = f"{designer_payload}\n\nProject Docs:\n{designer_docs}\n"
     designer_input = _base_input_items() + _user_message(designer_payload)
     _agent_status("designer", "running", "Designing UI")
     _agent_log("designer", "Creating design spec.")
@@ -1076,6 +1151,14 @@ Constraints:
             "- Do NOT write to frontend/.\n"
             "- Update app/Pages/* and app/wwwroot/* for UI.\n"
         )
+    frontend_docs = _docs_bundle(
+        [
+            "UI_UX.md",
+            "API.md",
+            "REALTIME.md",
+            "GLOSSARY.md",
+        ]
+    )
     frontend_payload = (
         f"{_memory_block('frontend')}\n"
         "REQUIREMENTS.md:\n"
@@ -1086,6 +1169,8 @@ Constraints:
         f"{design_spec}\n"
         f"{blazor_guard}\n"
     )
+    if frontend_docs:
+        frontend_payload = f"{frontend_payload}\n\nProject Docs:\n{frontend_docs}\n"
     frontend_input = _base_input_items() + _user_message(frontend_payload)
     _agent_status("frontend", "running", "Building UI")
     _agent_log("frontend", "Implementing frontend.")
@@ -1097,6 +1182,15 @@ Constraints:
     _agent_log("frontend", "Frontend written.")
     _require_approval("frontend", "Frontend Developer", frontend_written)
 
+    backend_docs = _docs_bundle(
+        [
+            "API.md",
+            "DATA_MODEL.md",
+            "RULES_ENGINE.md",
+            "REALTIME.md",
+            "DOMAIN_ROTARY.md",
+        ]
+    )
     backend_payload = (
         f"{_memory_block('backend')}\n"
         "REQUIREMENTS.md:\n"
@@ -1104,6 +1198,8 @@ Constraints:
         "AGENT_TASKS.md:\n"
         f"{agent_tasks}\n"
     )
+    if backend_docs:
+        backend_payload = f"{backend_payload}\n\nProject Docs:\n{backend_docs}\n"
     backend_input = _base_input_items() + _user_message(backend_payload)
     _agent_status("backend", "running", "Building backend")
     _agent_log("backend", "Implementing backend.")
@@ -1115,6 +1211,14 @@ Constraints:
     _agent_log("backend", "Backend written.")
     _require_approval("backend", "Backend Developer", backend_written)
 
+    tester_docs = _docs_bundle(
+        [
+            "RUNBOOK.md",
+            "API.md",
+            "REALTIME.md",
+            "UI_UX.md",
+        ]
+    )
     tester_payload = (
         f"{_memory_block('tester')}\n"
         "REQUIREMENTS.md:\n"
@@ -1124,6 +1228,8 @@ Constraints:
         "TEST.md:\n"
         f"{test_plan}\n"
     )
+    if tester_docs:
+        tester_payload = f"{tester_payload}\n\nProject Docs:\n{tester_docs}\n"
     tester_input = _base_input_items() + _user_message(tester_payload)
     _agent_status("tester", "running", "Testing outputs")
     _agent_log("tester", "Creating test plan.")
