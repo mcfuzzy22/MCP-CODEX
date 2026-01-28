@@ -1,9 +1,20 @@
 {
-  "name": "rotary-engine-simulator-backend-placeholder",
+  "name": "epic-00-repo-retrofit-backend",
   "version": "1.0.0",
-  "private": true,
-  "description": "Placeholder file – this project is a Blazor WebAssembly app and does not require a Node/Express backend.",
+  "description": "Placeholder backend for EPIC 00: Repo Retrofit (Blazor WebAssembly) – no runtime APIs required by the epic.",
+  "main": "server.js",
   "scripts": {
-    "start": "echo \"No backend server. This Blazor WebAssembly project runs via 'cd app && dotnet run'.\" && exit 0"
+    "start": "node server.js"
+  },
+  "keywords": [
+    "blazor",
+    "epic-00",
+    "repo-retrofit",
+    "agents"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
   }
 }

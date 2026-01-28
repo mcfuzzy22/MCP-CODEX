@@ -134,6 +134,7 @@ const projectSelect = document.getElementById('project-select');
 const taskSelect = document.getElementById('task-select');
 const projectNewBtn = document.getElementById('project-new-btn');
 const projectRunBtn = document.getElementById('project-run-btn');
+const projectRunAllBtn = document.getElementById('project-run-all-btn');
 const projectRunStatus = document.getElementById('project-run-status');
 
 const metricTotalTasks = document.getElementById('metric-total-tasks');
@@ -257,8 +258,8 @@ function renderProjectRunStatus() {
   if (!projectRunStatus) return;
   const status = state.currentProject?.runStatus || 'idle';
   projectRunStatus.textContent = status;
-  if (!projectRunBtn) return;
-  projectRunBtn.disabled = status === 'running';
+  if (projectRunBtn) projectRunBtn.disabled = status === 'running';
+  if (projectRunAllBtn) projectRunAllBtn.disabled = status === 'running';
 }
 
 async function loadTasks() {
@@ -949,6 +950,23 @@ projectRunBtn.addEventListener('click', async () => {
     projectRunBtn.disabled = false;
   }
 });
+
+if (projectRunAllBtn) {
+  projectRunAllBtn.addEventListener('click', async () => {
+    if (!state.currentProjectId) return;
+    projectRunAllBtn.disabled = true;
+    try {
+      await fetchProjectJSON('/run-all', { method: 'POST' });
+      showToast('Run-all started.', 'success');
+      await loadProjectInfo();
+    } catch (err) {
+      console.error('Run-all failed', err);
+      showToast('Could not start run-all. Check task templates.', 'error');
+    } finally {
+      projectRunAllBtn.disabled = false;
+    }
+  });
+}
 
 // ------------- SSE real-time events -------------
 

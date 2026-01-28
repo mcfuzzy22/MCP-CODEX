@@ -1,438 +1,70 @@
-/* Global Layout & Typography
-   -------------------------------------------------- */
-
-:root {
-    --color-bg: #F5F5F7;
-    --color-surface: #ffffff;
-    --color-primary: #1F4F7B;
-    --color-primary-soft: #e2edf7;
-    --color-secondary: #E86F3E;
-    --color-text-main: #111827;
-    --color-text-muted: #4B5563;
-    --color-border-subtle: #E5E7EB;
-    --shadow-soft: 0 8px 20px rgba(15, 23, 42, 0.08);
-    --radius-card: 12px;
-    --radius-pill: 999px;
-}
-
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-}
-
-html,
+/* Base typography and layout */
 body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     margin: 0;
     padding: 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    color: var(--color-text-main);
-    background-color: var(--color-bg);
+    line-height: 1.5;
 }
 
-body {
-    -webkit-font-smoothing: antialiased;
-}
-
-a {
-    color: var(--color-primary);
-    text-decoration: none;
-}
-
-a:hover {
-    text-decoration: underline;
-}
-
-/* Utility containers
-   -------------------------------------------------- */
-
-.page-home {
-    max-width: 1200px;
+main {
+    padding: 1.5rem 1.25rem;
+    max-width: 960px;
     margin: 0 auto;
-    padding: 1.5rem 1.25rem 3rem;
 }
 
-@media (min-width: 1024px) {
-    .page-home {
-        padding-top: 2.5rem;
-    }
+/* EPIC 00 home page styling */
+.epic-banner {
+    border-left: 4px solid #2563eb;
+    padding-left: 1rem;
+    margin-bottom: 1.5rem;
 }
 
-/* Hero Section
-   -------------------------------------------------- */
-
-.hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-    gap: 2.5rem;
-    align-items: center;
-    margin-bottom: 3rem;
+.epic-banner h1 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.75rem;
 }
 
-@media (max-width: 767.98px) {
-    .hero {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 2rem;
-    }
-}
-
-.hero-content h1 {
-    font-size: clamp(2.1rem, 2.6vw + 1.3rem, 2.8rem);
-    line-height: 1.1;
-    margin: 0 0 0.75rem;
-    color: var(--color-primary);
-}
-
-.hero-subtitle {
-    margin: 0 0 1.75rem;
-    max-width: 34rem;
-    font-size: 1.05rem;
-    color: var(--color-text-muted);
-}
-
-.hero-cta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-}
-
-/* Buttons
-   -------------------------------------------------- */
-
-.btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-pill);
-    border: 1px solid transparent;
-    padding: 0.65rem 1.4rem;
-    font-size: 0.98rem;
-    font-weight: 600;
-    cursor: pointer;
-    text-decoration: none;
-    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease, border-color 0.15s ease;
-    white-space: nowrap;
-}
-
-.btn-primary {
-    background-color: var(--color-primary);
-    color: #ffffff;
-    box-shadow: 0 8px 16px rgba(15, 23, 42, 0.25);
-}
-
-.btn-primary:hover {
-    background-color: #163856;
-    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.35);
-    text-decoration: none;
-    transform: translateY(-1px);
-}
-
-.btn-secondary {
-    background-color: #ffffff;
-    color: var(--color-primary);
-    border-color: var(--color-primary-soft);
-}
-
-.btn-secondary:hover {
-    border-color: var(--color-primary);
-    background-color: var(--color-primary-soft);
-    text-decoration: none;
-}
-
-/* Hero Visual (Rotor Illustration)
-   -------------------------------------------------- */
-
-.hero-visual {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.hero-visual-caption {
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
-    margin-top: 0.75rem;
-    text-align: center;
-    max-width: 20rem;
-}
-
-/* Stylized rotor & housing */
-.rotor-visual {
-    width: 260px;
-    height: 260px;
-    max-width: 100%;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 20%, #fdfdfd, #e5ecf5 55%, #c8d4e4 100%);
-    box-shadow: var(--shadow-soft);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
-.rotor-outer {
-    width: 72%;
-    height: 72%;
-    border-radius: 56% 44% 58% 42%;
-    border: 3px solid rgba(31, 79, 123, 0.65);
-    background: radial-gradient(circle at 50% 35%, #f9fafb 0%, #e4edf7 55%, #d1d9e8 100%);
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.rotor-inner {
-    position: relative;
-    width: 64%;
-    height: 64%;
-    border-radius: 18%;
-    background: radial-gradient(circle at 30% 20%, #fefefe 0%, #e5ecf5 65%, #c2d0e4 100%);
-    transform: rotate(-18deg);
-    animation: rotor-spin 10s linear infinite;
-}
-
-.rotor-core {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 32%;
-    height: 32%;
-    transform: translate(-50%, -50%);
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 20%, #ffffff, #c5d3e5);
-    border: 2px solid rgba(15, 23, 42, 0.18);
-}
-
-.rotor.apex {
-    position: absolute;
-    width: 11px;
-    height: 11px;
-    border-radius: 50%;
-    background: var(--color-secondary);
-    box-shadow: 0 0 0 3px rgba(232, 111, 62, 0.35);
-}
-
-.rotor.apex-a {
-    top: 6%;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.rotor.apex-b {
-    bottom: 10%;
-    left: 12%;
-}
-
-.rotor.apex-c {
-    bottom: 10%;
-    right: 12%;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .rotor-inner {
-        animation: none;
-    }
-}
-
-@keyframes rotor-spin {
-    from {
-        transform: rotate(-18deg);
-    }
-    to {
-        transform: rotate(342deg);
-    }
-}
-
-/* Sections
-   -------------------------------------------------- */
-
-.home-section {
-    margin-bottom: 3rem;
-}
-
-.home-section h2 {
-    font-size: 1.5rem;
-    margin: 0 0 1.25rem;
-    color: var(--color-primary);
-}
-
-.home-section p {
+.epic-intro {
     margin: 0;
+    color: #4b5563;
 }
 
-/* Card Grid
-   -------------------------------------------------- */
-
-.card-grid {
-    display: grid;
-    gap: 1.25rem;
-}
-
-.card-grid.three-cols {
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-}
-
-.card-grid.compact {
-    gap: 1rem;
-}
-
-.card {
-    background-color: var(--color-surface);
-    border-radius: var(--radius-card);
-    padding: 1.25rem 1.3rem;
-    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
-    border: 1px solid rgba(148, 163, 184, 0.18);
-}
-
-.card h3 {
-    margin-top: 0;
+.repo-overview h2,
+.epic-notes h2 {
+    margin-top: 1.5rem;
     margin-bottom: 0.5rem;
-    font-size: 1.1rem;
-}
-
-.card p {
-    font-size: 0.95rem;
-    color: var(--color-text-muted);
-}
-
-/* Card Icons
-   -------------------------------------------------- */
-
-.card-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-    margin-bottom: 0.6rem;
-    background: var(--color-primary-soft);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
-/* Simple symbolic icons using pseudo-elements */
-
-.card-icon::before,
-.card-icon::after {
-    content: "";
-    position: absolute;
-}
-
-/* Visualize icon: small rotor in housing */
-.icon-visualize::before {
-    width: 18px;
-    height: 18px;
-    border-radius: 40% 60% 45% 55%;
-    border: 2px solid var(--color-primary);
-    box-sizing: border-box;
-}
-
-.icon-visualize::after {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    border: 2px solid var(--color-secondary);
-}
-
-/* Tune icon: sliders */
-.icon-tune::before {
-    width: 18px;
-    height: 2px;
-    background: var(--color-primary);
-    top: 11px;
-}
-
-.icon-tune::after {
-    width: 11px;
-    height: 11px;
-    border-radius: 999px;
-    border: 2px solid var(--color-secondary);
-    top: 6px;
-    left: 9px;
-}
-
-/* Risk icon: gauge / warning */
-.icon-risk::before {
-    width: 18px;
-    height: 10px;
-    border-radius: 18px 18px 0 0;
-    border: 2px solid var(--color-secondary);
-    border-bottom: none;
-    bottom: 5px;
-}
-
-.icon-risk::after {
-    width: 2px;
-    height: 7px;
-    background: var(--color-secondary);
-    bottom: 7px;
-    left: 50%;
-    transform-origin: bottom center;
-    transform: translateX(-50%) rotate(20deg);
-}
-
-/* Disclaimer snippet
-   -------------------------------------------------- */
-
-.disclaimer-snippet {
-    margin-top: 0.5rem;
-}
-
-.disclaimer-card {
-    background: linear-gradient(135deg, #FFF7E6, #FFE3CF);
-    border-radius: var(--radius-card);
-    padding: 1.4rem 1.5rem;
-    border: 1px solid #F1C21B;
-    box-shadow: 0 4px 14px rgba(148, 116, 24, 0.18);
-}
-
-.disclaimer-card h2 {
-    margin: 0 0 0.6rem;
     font-size: 1.25rem;
-    color: #8a5a00;
 }
 
-.disclaimer-card p {
-    margin: 0 0 0.75rem;
+.repo-layout-list {
+    list-style: disc;
+    padding-left: 1.5rem;
+    margin: 0.5rem 0 1rem 0;
+}
+
+.repo-layout-list li {
+    margin-bottom: 0.25rem;
+}
+
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.95em;
+    background-color: #f3f4f6;
+    padding: 0.1rem 0.25rem;
+    border-radius: 3px;
+}
+
+.note {
     font-size: 0.95rem;
-    color: #7c5410;
+    color: #374151;
 }
 
-.disclaimer-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    font-weight: 600;
-    font-size: 0.94rem;
-    color: #8a5a00;
+.epic-notes ul {
+    list-style: disc;
+    padding-left: 1.5rem;
+    margin: 0.5rem 0 0 0;
 }
 
-.disclaimer-link::after {
-    content: "→";
-    font-size: 0.85em;
-    transition: transform 0.12s ease;
-}
-
-.disclaimer-link:hover {
-    text-decoration: none;
-}
-
-.disclaimer-link:hover::after {
-    transform: translateX(2px);
-}
-
-/* Responsive tweaks
-   -------------------------------------------------- */
-
-@media (max-width: 767.98px) {
-    .hero-cta {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .btn {
-        width: 100%;
-        justify-content: center;
-    }
+.epic-notes li {
+    margin-bottom: 0.25rem;
 }

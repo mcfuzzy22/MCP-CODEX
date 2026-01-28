@@ -1,0 +1,135 @@
+@page "/"
+
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<div class="rb-builder-landing">
+    <div class="rb-builder-landing-header">
+        <h1 class="rb-title">Rotary Engine Builder</h1>
+        <p class="rb-subtitle">
+            Configure a rotary engine build and see completion, cost, and warnings in real time.
+        </p>
+    </div>
+
+    <div class="rb-landing-card">
+        <div class="rb-landing-main-row">
+            <div class="rb-form-group">
+                <label for="engineFamily" class="rb-label">Engine family</label>
+                <select id="engineFamily"
+                        class="rb-select"
+                        @bind="selectedEngineFamily">
+                    <option value="">Select an engine family...</option>
+                    @foreach (var family in EngineFamilies)
+                    {
+                        <option value="@family">@family</option>
+                    }
+                </select>
+            </div>
+
+            <div class="rb-form-group rb-create-button-group">
+                <label class="rb-label rb-label-hidden">Create build</label>
+                <button class="rb-btn-primary"
+                        @onclick="CreateBuildAsync"
+                        disabled="@(!CanCreateBuild)">
+                    @(isCreating ? "Creating…" : "Create Build")
+                </button>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <div class="rb-error-message">
+                @errorMessage
+            </div>
+        }
+
+        <div class="rb-landing-info-panel">
+            <h2 class="rb-panel-title">How it works</h2>
+            <ol class="rb-steps-list">
+                <li><strong>Step 1:</strong> Choose an engine family and create a build.</li>
+                <li><strong>Step 2:</strong> Select parts by category in the builder.</li>
+                <li><strong>Step 3:</strong> Monitor completion, cost, and warnings in real time.</li>
+            </ol>
+            <p class="rb-helper-text">
+                You’ll be taken to the builder to choose parts once the build is created.
+            </p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private readonly string[] EngineFamilies = new[]
+    {
+        "13B",
+        "20B",
+        "12A",
+        "13B-REW",
+        "Other"
+    };
+
+    private string? selectedEngineFamily;
+    private bool isCreating;
+    private string? errorMessage;
+
+    private bool CanCreateBuild =>
+        !isCreating && !string.IsNullOrWhiteSpace(selectedEngineFamily);
+
+    private async Task CreateBuildAsync()
+    {
+        if (!CanCreateBuild)
+        {
+            return;
+        }
+
+        isCreating = true;
+        errorMessage = null;
+
+        try
+        {
+            var request = new CreateBuildRequest
+            {
+                EngineFamily = selectedEngineFamily!
+            };
+
+            var response = await Http.PostAsJsonAsync("api/builds", request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                errorMessage = "Unable to create build. Please try again.";
+                return;
+            }
+
+            var payload = await response.Content.ReadFromJsonAsync<CreateBuildResponse>();
+
+            if (payload == null || string.IsNullOrWhiteSpace(payload.BuildId))
+            {
+                errorMessage = "Received an unexpected response from the server.";
+                return;
+            }
+
+            Navigation.NavigateTo($"/builder/{payload.BuildId}");
+        }
+        catch
+        {
+            errorMessage = "Something went wrong while creating the build. Check your connection and try again.";
+        }
+        finally
+        {
+            isCreating = false;
+        }
+    }
+
+    private sealed class CreateBuildRequest
+    {
+        public string EngineFamily { get; set; } = string.Empty;
+    }
+
+    private sealed class CreateBuildResponse
+    {
+        public string BuildId { get; set; } = string.Empty;
+        public string? Summary { get; set; }
+        public double? Completion { get; set; }
+        public decimal? Cost { get; set; }
+    }
+}

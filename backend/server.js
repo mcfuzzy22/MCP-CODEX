@@ -66,9 +66,24 @@ function diaryPath(projectId, agentId) {
   return path.join(diaryDir(projectId), `${agentId}.md`);
 }
 
+function approvalsDir(projectId) {
+  return path.join(projectDir(projectId), 'approvals');
+}
+
+function approvalDecisionPath(projectId, approvalId) {
+  return path.join(approvalsDir(projectId), `${approvalId}.json`);
+}
+
+function memoryDir(projectId) {
+  return path.join(projectDir(projectId), 'memory');
+}
+
 function defaultAgents() {
   return [
     { id: 'pm', name: 'Project Manager' },
+    { id: 'doc', name: 'Documentation Curator' },
+    { id: 'domain', name: 'Domain Expert' },
+    { id: 'data', name: 'Data Modeler' },
     { id: 'designer', name: 'Designer' },
     { id: 'frontend', name: 'Frontend Developer' },
     { id: 'backend', name: 'Backend Developer' },
@@ -155,6 +170,20 @@ function ensureProjectFiles(state) {
   }
 
   ensureDir(diaryDir(state.project.id));
+  ensureDir(approvalsDir(state.project.id));
+  ensureDir(memoryDir(state.project.id));
+  const envExamplePath = path.join(state.project.rootPath, '.env.example');
+  if (!fs.existsSync(envExamplePath)) {
+    const envLines = [
+      'DB_HOST=localhost',
+      'DB_PORT=3306',
+      'DB_USER=rotary_user',
+      'DB_NAME=rotarysite',
+      'DB_PASSWORD=',
+      ''
+    ];
+    fs.writeFileSync(envExamplePath, envLines.join('\n'), 'utf-8');
+  }
   for (const agent of state.agents.values()) {
     const dPath = diaryPath(state.project.id, agent.id);
     if (!fs.existsSync(dPath)) {
@@ -350,14 +379,15 @@ function startProjectRun(state, options = {}) {
   addLog(state, 'runner', null, `Launching: ${python} ${args.join(' ')}`);
   const child = spawn(python, args, {
     cwd: state.project.rootPath,
-    env: {
-      ...process.env,
-      PROJECT_ID: state.project.id,
-      PROJECT_TYPE: state.project.type,
-      PROJECT_ROOT: state.project.rootPath,
-      AGENT_APPROVAL_REQUIRED: '0'
-    }
-  });
+      env: {
+        ...process.env,
+        PROJECT_ID: state.project.id,
+        PROJECT_TYPE: state.project.type,
+        PROJECT_ROOT: state.project.rootPath,
+        AGENT_APPROVAL_REQUIRED: '1',
+        APPROVAL_MODE: 'dashboard'
+      }
+    });
 
   projectRunners.set(projectId, child);
 
@@ -413,6 +443,14 @@ function startProjectRun(state, options = {}) {
         const agentId = parts[1] || 'runner';
         const message = parts.slice(2).join('|') || '';
         addLog(state, agentId, null, message);
+      } else if (trimmed.startsWith('APPROVAL_REQUEST|')) {
+        const payloadText = trimmed.slice('APPROVAL_REQUEST|'.length);
+        try {
+          const payload = JSON.parse(payloadText);
+          handleApprovalRequest(state, payload);
+        } catch (err) {
+          addLog(state, 'runner', null, `Invalid approval payload: ${payloadText}`);
+        }
       } else {
         addLog(state, 'runner', null, trimmed);
       }
@@ -469,6 +507,199 @@ function startProjectRun(state, options = {}) {
   return { ok: true };
 }
 
+function runSingleTask(state, taskFile) {
+  return new Promise((resolve) => {
+    const projectId = state.project.id;
+    const python = resolvePythonPath();
+    const scriptPath = path.join(__dirname, '..', 'multi_agent_workflow.py');
+    const args = [scriptPath, '--project-root', state.project.rootPath];
+
+    if (taskFile) {
+      const task = readTaskFile(taskFile);
+      if (!task) {
+        addLog(state, 'runner', null, `Task file not found: ${taskFile}`);
+        resolve({ ok: false });
+        return;
+      }
+      args.push('--task-file', task.name);
+      state.project.activeTaskFile = task.name;
+      saveProjectState(state);
+      broadcastEvent(projectId, 'project_run_status', {
+        status: state.project.runStatus,
+        lastRunAt: state.project.lastRunAt,
+        lastRunResult: state.project.lastRunResult,
+        activeTaskFile: state.project.activeTaskFile
+      });
+    } else {
+      args.push('--task-from-agents');
+      state.project.activeTaskFile = null;
+    }
+
+    addLog(state, 'runner', null, `Launching: ${python} ${args.join(' ')}`);
+    const child = spawn(python, args, {
+      cwd: state.project.rootPath,
+      env: {
+        ...process.env,
+        PROJECT_ID: state.project.id,
+        PROJECT_TYPE: state.project.type,
+        PROJECT_ROOT: state.project.rootPath,
+        AGENT_APPROVAL_REQUIRED: '1',
+        APPROVAL_MODE: 'dashboard',
+      },
+    });
+
+    projectRunners.set(projectId, child);
+
+    child.stdout.on('data', (chunk) => {
+      const text = chunk.toString();
+      text.split(/\r?\n/).forEach((line) => {
+        const trimmed = line.trim();
+        if (!trimmed) return;
+        if (trimmed.startsWith('AGENT_STATUS|')) {
+          const parts = trimmed.split('|');
+          const agentId = parts[1];
+          const status = parts[2];
+          const step = parts.slice(3).join('|') || 'Working';
+          const agent = state.agents.get(agentId);
+          if (agent) {
+            agent.status = status;
+            agent.currentStep = step;
+            agent.updatedAt = Date.now();
+            broadcastEvent(projectId, 'agent_updated', agent);
+            saveProjectState(state);
+          }
+        } else if (trimmed.startsWith('AGENT_TOKENS|')) {
+          const parts = trimmed.split('|');
+          const agentId = parts[1];
+          const tokens = Number(parts[2]) || 0;
+          state.tokenUsage = state.tokenUsage || {};
+          state.tokenUsage[agentId] = (state.tokenUsage[agentId] || 0) + tokens;
+          saveProjectState(state);
+          broadcastEvent(projectId, 'costs_updated', computeCosts(state).global);
+      } else if (trimmed.startsWith('AGENT_LOG|')) {
+        const parts = trimmed.split('|');
+        const agentId = parts[1] || 'runner';
+        const message = parts.slice(2).join('|') || '';
+        addLog(state, agentId, null, message);
+      } else if (trimmed.startsWith('APPROVAL_REQUEST|')) {
+        const payloadText = trimmed.slice('APPROVAL_REQUEST|'.length);
+        try {
+          const payload = JSON.parse(payloadText);
+          handleApprovalRequest(state, payload);
+        } catch (err) {
+          addLog(state, 'runner', null, `Invalid approval payload: ${payloadText}`);
+        }
+      } else {
+        addLog(state, 'runner', null, trimmed);
+      }
+    });
+  });
+
+    child.stderr.on('data', (chunk) => {
+      const text = chunk.toString();
+      text.split(/\r?\n/).forEach((line) => {
+        if (line.trim()) addLog(state, 'runner', null, `[stderr] ${line.trim()}`);
+      });
+    });
+
+    child.on('close', (code) => {
+      projectRunners.delete(projectId);
+      resolve({ ok: code === 0 });
+    });
+
+    child.on('error', (err) => {
+      projectRunners.delete(projectId);
+      addLog(state, 'runner', null, `[spawn error] ${err.message}`);
+      resolve({ ok: false });
+    });
+  });
+}
+
+function startProjectRunAll(state) {
+  const projectId = state.project.id;
+  if (projectRunners.has(projectId)) {
+    return { ok: false, error: 'Project is already running' };
+  }
+
+  const tasks = listTaskFiles().map((t) => t.name);
+  if (!tasks.length) {
+    return { ok: false, error: 'No task templates found' };
+  }
+
+  const blazorInit = ensureBlazorApp(state);
+  if (!blazorInit.ok) {
+    addLog(state, 'runner', null, `[blazor init] ${blazorInit.error}`);
+    return { ok: false, error: `Blazor init failed: ${blazorInit.error}` };
+  }
+
+  const orchestrator = state.agents.get('runner');
+  if (orchestrator) {
+    orchestrator.status = 'running';
+    orchestrator.currentStep = 'Running task queue';
+    orchestrator.updatedAt = Date.now();
+  }
+
+  state.project.runStatus = 'running';
+  state.project.lastRunAt = Date.now();
+  state.project.lastRunResult = null;
+  state.project.activeTaskFile = null;
+  saveProjectState(state);
+  broadcastEvent(projectId, 'project_run_status', {
+    status: state.project.runStatus,
+    lastRunAt: state.project.lastRunAt,
+    lastRunResult: state.project.lastRunResult,
+    activeTaskFile: state.project.activeTaskFile,
+  });
+  if (orchestrator) broadcastEvent(projectId, 'agent_updated', orchestrator);
+
+  (async () => {
+    addLog(state, 'runner', null, `Run-all started with ${tasks.length} tasks.`);
+    for (const taskFile of tasks) {
+      addLog(state, 'runner', null, `Starting task file: ${taskFile}`);
+      const result = await runSingleTask(state, taskFile);
+      if (!result.ok) {
+        state.project.runStatus = 'failed';
+        state.project.lastRunResult = `task failed: ${taskFile}`;
+        state.project.activeTaskFile = null;
+        saveProjectState(state);
+        broadcastEvent(projectId, 'project_run_status', {
+          status: state.project.runStatus,
+          lastRunAt: state.project.lastRunAt,
+          lastRunResult: state.project.lastRunResult,
+          activeTaskFile: state.project.activeTaskFile,
+        });
+        if (orchestrator) {
+          orchestrator.status = 'failed';
+          orchestrator.currentStep = 'Failed';
+          orchestrator.updatedAt = Date.now();
+          broadcastEvent(projectId, 'agent_updated', orchestrator);
+        }
+        addLog(state, 'runner', null, `Run-all stopped after failure: ${taskFile}`);
+        return;
+      }
+    }
+    state.project.runStatus = 'completed';
+    state.project.lastRunResult = 'ok';
+    state.project.activeTaskFile = null;
+    saveProjectState(state);
+    broadcastEvent(projectId, 'project_run_status', {
+      status: state.project.runStatus,
+      lastRunAt: state.project.lastRunAt,
+      lastRunResult: state.project.lastRunResult,
+      activeTaskFile: state.project.activeTaskFile,
+    });
+    if (orchestrator) {
+      orchestrator.status = 'idle';
+      orchestrator.currentStep = 'Idle';
+      orchestrator.updatedAt = Date.now();
+      broadcastEvent(projectId, 'agent_updated', orchestrator);
+    }
+    addLog(state, 'runner', null, 'Run-all completed.');
+  })();
+
+  return { ok: true };
+}
+
 function getProjectOr404(req, res) {
   const projectId = req.params.projectId || req.query.projectId;
   if (!projectId || !projects.has(projectId)) {
@@ -498,6 +729,80 @@ function appendDiary(state, agentId, message) {
     fs.appendFileSync(diaryPath(state.project.id, agentId), line, 'utf-8');
   } catch (err) {
     // Ignore diary write failures to keep app responsive
+  }
+}
+
+function appendApprovalLog(state, approval, decision) {
+  const stamp = new Date().toISOString();
+  const logDir = path.join(state.project.rootPath, 'logs');
+  ensureDir(logDir);
+  const logPath = path.join(logDir, 'APPROVALS.md');
+  if (!fs.existsSync(logPath)) {
+    fs.writeFileSync(logPath, '# Approvals Log\n\n', 'utf-8');
+  }
+  const line = `- [${stamp}] ${decision.toUpperCase()} • ${approval.agentId} • ${approval.stepName || 'Approval'} • ${approval.id}\n`;
+  try {
+    fs.appendFileSync(logPath, line, 'utf-8');
+  } catch (err) {
+    // Ignore approval log write failures
+  }
+}
+
+function writeApprovalDecision(state, approval) {
+  const dir = approvalsDir(state.project.id);
+  ensureDir(dir);
+  const payload = {
+    id: approval.id,
+    status: approval.status,
+    decidedAt: approval.decidedAt,
+    agentId: approval.agentId,
+    stepName: approval.stepName || null,
+  };
+  fs.writeFileSync(
+    approvalDecisionPath(state.project.id, approval.id),
+    JSON.stringify(payload, null, 2),
+    'utf-8'
+  );
+}
+
+function handleApprovalRequest(state, payload) {
+  if (!payload || typeof payload !== 'object') return;
+  const files = Array.isArray(payload.files) ? payload.files : [];
+  const outputSummary =
+    payload.summary ||
+    payload.outputSummary ||
+    (files.length ? `Files:\n- ${files.join('\n- ')}` : '');
+
+  const approval = {
+    id: payload.id || nanoid(),
+    agentId: payload.agentId || payload.agent_id || 'runner',
+    taskId: payload.taskId || null,
+    status: 'pending',
+    outputSummary,
+    createdAt: Date.now(),
+    decidedAt: null,
+    stepName: payload.role || payload.stepName || null,
+    files
+  };
+
+  state.approvals.set(approval.id, approval);
+  broadcastEvent(state.project.id, 'approval_created', approval);
+  addLog(
+    state,
+    approval.agentId,
+    approval.taskId,
+    `Approval requested for ${approval.stepName || approval.id}.`
+  );
+
+  if (state.project.runStatus === 'running') {
+    state.project.runStatus = 'waiting_approval';
+    saveProjectState(state);
+    broadcastEvent(state.project.id, 'project_run_status', {
+      status: state.project.runStatus,
+      lastRunAt: state.project.lastRunAt,
+      lastRunResult: state.project.lastRunResult,
+      activeTaskFile: state.project.activeTaskFile
+    });
   }
 }
 
@@ -825,6 +1130,16 @@ app.post('/projects/:projectId/run', (req, res) => {
   res.json({ ok: true });
 });
 
+app.post('/projects/:projectId/run-all', (req, res) => {
+  const state = getProjectOr404(req, res);
+  if (!state) return;
+  const result = startProjectRunAll(state);
+  if (!result.ok) {
+    return res.status(400).json({ error: result.error });
+  }
+  res.json({ ok: true });
+});
+
 app.get('/projects/:projectId/agents-doc', (req, res) => {
   const state = getProjectOr404(req, res);
   if (!state) return;
@@ -1075,6 +1390,19 @@ app.post('/projects/:projectId/approvals/:id/approve', (req, res) => {
   approval.decidedAt = Date.now();
   broadcastEvent(state.project.id, 'approval_updated', approval);
   addLog(state, approval.agentId, approval.taskId, 'Approval granted.');
+  appendApprovalLog(state, approval, 'approved');
+  writeApprovalDecision(state, approval);
+
+  if (projectRunners.has(state.project.id)) {
+    state.project.runStatus = 'running';
+    saveProjectState(state);
+    broadcastEvent(state.project.id, 'project_run_status', {
+      status: state.project.runStatus,
+      lastRunAt: state.project.lastRunAt,
+      lastRunResult: state.project.lastRunResult,
+      activeTaskFile: state.project.activeTaskFile
+    });
+  }
 
   completeTaskAfterApproval(state.project.id, approval);
   res.json({ ok: true });
@@ -1094,6 +1422,19 @@ app.post('/projects/:projectId/approvals/:id/reject', (req, res) => {
   approval.decidedAt = Date.now();
   broadcastEvent(state.project.id, 'approval_updated', approval);
   addLog(state, approval.agentId, approval.taskId, 'Approval rejected.');
+  appendApprovalLog(state, approval, 'rejected');
+  writeApprovalDecision(state, approval);
+
+  if (projectRunners.has(state.project.id)) {
+    state.project.runStatus = 'running';
+    saveProjectState(state);
+    broadcastEvent(state.project.id, 'project_run_status', {
+      status: state.project.runStatus,
+      lastRunAt: state.project.lastRunAt,
+      lastRunResult: state.project.lastRunResult,
+      activeTaskFile: state.project.activeTaskFile
+    });
+  }
 
   const task = state.tasks.get(approval.taskId);
   const agent = state.agents.get(approval.agentId);

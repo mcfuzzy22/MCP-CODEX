@@ -1,150 +1,85 @@
-# Rotary Engine Interactive Website – Requirements
+# EPIC 00: Repo Retrofit – MVP REQUIREMENTS
 
-## 1. Product Overview
+## Product Overview
 
-An interactive, educational, and tool-driven rotary engine website focused initially on the Mazda 13B-style rotary engine. It runs as a Blazor WebAssembly app and explains how rotary engines work through visualizations, simulations, and data-driven insights for enthusiasts, students, and builders.
+This epic retrofits the existing repository to support an agent-driven workflow and prepares the Blazor WebAssembly app for consistent local development and logging.
 
-Physics and predictions are illustrative and educational only, not manufacturer-certified.
+## Goals
 
-## 2. Target Users
+1. Add standard project structure folders to the repo root:
+   - `/docs`
+   - `/agents`
+   - `/tasks`
+   - `/logs`
+   - `/db`
+2. Align the agent/roster structure with the existing “rotary builder” project conventions (folder naming, key files, and basic layout).
+3. Provide clear, minimal developer onboarding for running the existing Blazor WebAssembly app.
+4. Capture this work in the project changelog.
 
-- **Enthusiasts**
-  - Car and rotary fans wanting intuitive visual explanations.
-- **Students / Learners**
-  - Engineering and tech students needing conceptual understanding of rotary operation.
-- **Builders / Tuners (entry–mid level)**
-  - Hobbyists exploring effects of tuning parameters on wear, heat, and risk.
+## Target Users
 
-## 3. Core Product Goals
+- Internal developers working on the Blazor WebAssembly app.
+- Tooling/agent developers integrating with the `/agents`, `/tasks`, and `/db` structures.
+- QA/Tester roles needing a predictable place for logs (`/logs`) and documentation (`/docs`).
 
-- Explain rotary (13B) operation with clear, accessible visuals and language.
-- Allow users to manipulate key engine parameters and immediately see effects.
-- Present risks (wear, heat, detonation risk) in a simple, intuitive way.
-- Provide a foundation that can later extend to other engines (20B, Renesis) and deeper simulations.
+## Key Functional Requirements
 
-## 4. Key Features
+1. **Repository structure**
+   - The following directories exist at the repository root:
+     - `docs/`
+     - `agents/`
+     - `tasks/`
+     - `logs/`
+     - `db/`
+   - Directories may initially contain placeholder files (e.g., `.gitkeep`) if needed to commit them.
 
-### 4.1 Educational Content & Visuals
+2. **Blazor WebAssembly constraints**
+   - The Blazor WebAssembly app lives in the existing `app/` directory.
+   - All application code changes must occur under `app/`:
+     - `app/Program.cs`
+     - `app/Pages/*`
+     - `app/wwwroot/*`
+     - Other existing `app/` subfolders as needed.
+   - **Do NOT** create separate `frontend/` or `backend/` directories for the UI or API under the project root or `app/`.
 
-- Overview of rotary engine parts and operation:
-  - Rotor geometry and motion
-  - Eccentric shaft operation
-  - Intake, compression, combustion, exhaust cycles
-  - Apex, side, and corner seals
-- Clear, user-friendly explanations derived from engineering concepts.
-- Glossary of rotary-specific terminology.
+3. **README**
+   - A `README.md` must exist in the **project root**.
+   - It must include:
+     - Brief description of the project and the repo structure (mentioning `/docs`, `/agents`, `/tasks`, `/logs`, `/db`, and `app/`).
+     - Prerequisites to run the Blazor WebAssembly app (e.g., required .NET SDK version if known or a generic note).
+     - Clear, step-by-step instructions to run the app locally, including:
+       1. Navigating into the `app/` directory.
+       2. Running `dotnet run` from within `app/`.
+       3. How to access the app in a browser (e.g., default URL).
 
-### 4.2 Interactive Engine Visualization
+4. **Changelog**
+   - A `logs/CHANGELOG.md` file must be updated.
+   - It must contain at least one new summary line describing the work done in this run (e.g., date, “EPIC 00 repo retrofit,” short description).
+   - Format should be consistent with any existing style in `CHANGELOG.md` (if present), or use a simple bullet or dated entry if none exists.
 
-- 2D or 3D visualization of a 13B-style rotary engine:
-  - Animated rotor movement inside housing.
-  - Visual indication of cycles (color or labels for intake, compression, combustion, exhaust).
-- Overlays for:
-  - Heat distribution / thermal stress zones.
-  - Wear “intensity” or risk over time (apex seal, etc.).
-- Ability to pause, slow down, and step through cycles.
+5. **Roster alignment**
+   - The `/agents` and `/tasks` directories must be structured so they can be aligned later with the “rotary builder” project’s conventions.
+   - At a minimum:
+     - `/agents` is reserved for agent definitions / configurations.
+     - `/tasks` is reserved for task/EPIC definition files (e.g., `EPIC_00_MVP.md`).
+   - Any existing or new roster/agent-related files should be organized to be easily comparable to the rotary builder project structure (naming, placement, and clear comments where alignment matters).
 
-### 4.3 Simulation Inputs
+## Non-Functional Requirements & Constraints
 
-User-adjustable parameters (via UI controls):
+- **Scope limitation**
+  - Do not reorganize the Blazor app beyond what is required to support local running and minimal documentation.
+  - No new major features or APIs should be added inside `app/` beyond what’s needed for basic wiring or placeholders.
 
-- Boost pressure
-- Air–fuel ratio (AFR)
-- Ignition timing
-- RPM range / operating profile
-- Seal type/material (e.g., OEM, upgraded, “race”)
+- **Performance & stability**
+  - The app must still build and run successfully using `dotnet run` in the `app/` directory.
+  - No breaking changes to existing working pages or routing.
 
-### 4.4 Simulation Outputs
+- **Developer experience**
+  - File paths and commands in `README.md` must be accurate and copy-pasteable.
+  - Any assumptions (e.g., minimum .NET version if not discoverable) should be clearly labeled as such.
 
-Real-time or near-real-time outputs, based on simplified physics models from the Research Agent:
+- **Compliance with constraints**
+  - Do not create `frontend/` or `backend/` directories for the UI.
+  - All runtime and configuration changes must be compatible with a Blazor WebAssembly project layout.
 
-- Predicted wear levels (especially apex seals, but can include general wear metric).
-- Thermal stress / temperature zones.
-- Simple risk classification:
-  - “Safe”
-  - “Aggressive”
-  - “Engine-grenade” (or equivalent high-risk label)
-- Visualization responds dynamically as inputs change.
-
-### 4.5 Architecture & Extensibility
-
-- Modular simulation logic:
-  - Encapsulated models for:
-    - Heat behavior
-    - Wear behavior
-    - Stress/risk computation
-  - Engine configuration profiles (start with 13B, but structure allows adding 20B, Renesis later).
-- Clear separation between:
-  - UI components
-  - Visualization/graphics module
-  - Simulation/calculation logic
-- Structured API-style boundaries within the Blazor app (e.g., services, model classes) for possible future use by mobile apps or advanced analytics.
-
-### 4.6 Quality, Usability & Performance
-
-- Simple and intuitive UI for non-engineers:
-  - Clear labels and tooltips
-  - Use of colors and graphics instead of dense text
-- Performance:
-  - Smooth animations on modern browsers
-  - Reasonable CPU usage for WebAssembly in typical desktop/laptop environments
-- Robustness:
-  - Graceful handling of invalid or extreme input values
-  - Clear warnings that output is illustrative/approximate
-
-## 5. Technical Constraints & Environment
-
-- **Framework:** Blazor WebAssembly.
-- **Project structure:**
-  - Use the existing `app/` folder as the Blazor project root.
-  - Do NOT create separate `frontend/` or `backend/` folders for the app UI.
-- **Code locations:**
-  - Main configuration: `app/Program.cs`
-  - Pages/views: `app/Pages/*`
-  - Static assets (images, JS helpers, CSS): `app/wwwroot/*`
-- **Backend:**
-  - Primarily client-side (WASM). Only add server/backend services if absolutely necessary; keep any such boundary clean and minimal.
-- **Local run instructions:**
-  - Must support: `cd app && dotnet run`
-- **Deliverables required in project root (not inside app/):**
-  - `README.md` – Setup and run instructions, including:
-    - Summary of where Blazor frontend (and any backend) live.
-    - How to start the app locally.
-  - `logs/CHANGELOG.md` – Updated with at least one summary line for this run.
-- **Licensing / Data constraints:**
-  - Use publicly available, generic specs; avoid manufacturer-protected or proprietary data.
-  - Emphasize educational nature of predictions; no claim of OEM endorsement or certification.
-
-## 6. Content & Simulation Requirements
-
-### 6.1 Research & Content
-
-- Create a rotary engine knowledge base (markdown or JSON) that covers:
-  - 13B basics, rotor geometry, seal types, cycles, common failure modes.
-  - Public specs: approximate rotor dimensions, compression ratios, typical RPM limits, etc.
-- Simplified math/logic models (not full CFD/FEA) for:
-  - Wear progression (focus on apex seals).
-  - Heat buildup and dissipation.
-  - Stress indicators relevant to tuning changes.
-- Validation notes:
-  - Clear documentation of simplifying assumptions.
-  - Ranges where model is “reasonable” vs “very approximate.”
-
-### 6.2 Simulation Logic
-
-- Deterministic functions that input:
-  - RPM profile, boost, AFR, timing, seal choice.
-- And output:
-  - Normalized wear index (0–1 or 0–100 scale).
-  - Normalized heat index.
-  - Risk category derived from thresholds on these indices.
-- Ensure:
-  - Functions are fast enough for user-interactive updates.
-  - Edge cases (extreme values) produce safe, bounded outputs and warnings.
-
-## 7. Non-Goals / Out of Scope (for this phase)
-
-- Exact OEM-accurate performance prediction or tuning guidance.
-- Multi-engine comparison tools beyond basic architecture support.
-- Deep builder tools (e.g., full tune maps, part selection optimization).
-- Production deployment infrastructure; focus is on local run and demo-level quality.
+---

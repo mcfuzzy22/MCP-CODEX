@@ -1,287 +1,143 @@
-Rotary Engine Simulator – Wireframes
-====================================
+# README.md Wireframe – EPIC 00: Repo Retrofit (Blazor WebAssembly)
 
-Notation:
-- `[]` buttons / toggles
-- `()` radio/checkbox
-- `-----` separators
-- `|` and `+` for basic layout
-- ALL CAPS = key regions
+## 1. Title & Summary
 
-1. Home Page (Index)
---------------------
+- `# EPIC 00: Repo Retrofit (Blazor WebAssembly)`
+- One-sentence summary:
+  - Blazor WebAssembly app + agent-driven repo structure.
 
-Desktop layout:
+---
 
-+----------------------------------------------------------------------------------+
-| TOP NAV BAR: [Rotary Engine Simulator]  Home | Engine Overview | Simulation | ...|
-+----------------------------------------------------------------------------------+
+## 2. Overview
 
-+--------------------------------------------------+-------------------------------+
-| HERO LEFT                                       | HERO RIGHT                    |
-|                                                  |                               |
-|  [H1] Explore the 13B Rotary Engine              |  [Image: Rotor + Housing]    |
-|  See how tuning affects heat, wear, and risk.    |  (simple diagram/illustr.)   |
-|                                                  |                               |
-|  [ Start Simulation ]  [ Learn the Basics ]      |                               |
-+--------------------------------------------------+-------------------------------+
+- Short paragraph:
+  - Repo hosts a Blazor WebAssembly app under `app/`.
+  - Root-level folders prepared for agents, tasks, logs, docs, and data.
+  - EPIC 00 focuses on structure + onboarding, not new app features.
+- Explicit statement:
+  - “All Blazor WebAssembly application code lives in the `app/` directory.”
+  - “No `frontend/` or `backend/` directory is used for the UI.”
 
-+------------------------------------------------------------------------------+
-| HOW IT WORKS                                                                 |
-|------------------------------------------------------------------------------|
-|  [Visualize]     [Tweak Settings]           [See Risk]                       |
-|  Simple text     Simple text                Simple text                      |
-+------------------------------------------------------------------------------+
+---
 
-+------------------------------------------------------------------------------+
-| WHO THIS IS FOR                                                              |
-|  - Enthusiasts                                                               |
-|  - Students                                                                  |
-|  - Builders & Tuners                                                         |
-+------------------------------------------------------------------------------+
+## 3. Repository Layout
 
-+------------------------------------------------------------------------------+
-| DISCLAIMER SNIPPET                                                           |
-|  This tool is educational only... [Read full disclaimer]                     |
-+------------------------------------------------------------------------------+
+- Intro sentence: “High-level directory layout:”
+- Bullet or pseudo-tree:
 
-Footer (common):
-+------------------------------------------------------------------------------+
-| Short disclaimer | © Project Name | Links: About & Disclaimers               |
-+------------------------------------------------------------------------------+
+  - `app/` – Blazor WebAssembly application (source, pages, configuration, assets).
+  - `agents/` – Agent definitions and configuration placeholders.
+  - `tasks/` – EPIC/task definition files (e.g., `EPIC_00_MVP.md`).
+  - `logs/` – Log artifacts and `CHANGELOG.md` for project history.
+  - `docs/` – Additional project documentation and reference materials.
+  - `db/` – Data storage and local database files (as needed).
 
+- Short note about placeholder files being acceptable for now.
 
-2. Engine Overview Page
------------------------
+---
 
-+----------------------------------------------------------------------------------+
-| TOP NAV BAR                                                                      |
-+----------------------------------------------------------------------------------+
+## 4. Running the Blazor WebAssembly App Locally
 
-Content (single column with side images):
+### 4.1 Prerequisites (inline or referenced section)
 
-[H1] 13B Rotary Engine Overview
+- `.NET SDK` (version compatible with the Blazor WebAssembly project in `app/`).
+- Modern web browser.
+- Note about checking `TargetFramework` in `app/*.csproj` if unsure of SDK version.
 
-[Section] What Is a Rotary Engine?
-+--------------------------------------------------+-----------------------------+
-| Text: simple explainer                           | Image: simplified engine   |
-+--------------------------------------------------+-----------------------------+
+### 4.2 Steps
 
-[Section] Major Components
-+--------------------------------------------------+-----------------------------+
-| Text bullets: rotor, housing, eccentric shaft... | Labeled diagram             |
-| Each label may show tooltip on hover             | [Rotor] [Housing] ...       |
-+--------------------------------------------------+-----------------------------+
+Numbered list:
 
-[Section] Four Phases (Intake, Compression, Combustion, Exhaust)
-+----------------------------------------------------------------------------+
-| [Intake]  [Compression]  [Combustion]  [Exhaust] (color tiles)             |
-| short descriptions below each                                              |
-+----------------------------------------------------------------------------+
+1. From the repo root, change into the Blazor app directory:
 
-[Section] Rotor Motion & Eccentric Shaft
-+--------------------------------------------------+-----------------------------+
-| Text explanation                                | Diagram / simple motion     |
-+--------------------------------------------------+-----------------------------+
+   ```bash
+   cd app
+   ```
 
-[Section] Common Failure Modes
-+------------------------------------------------------------------------------+
-| - Apex seal wear (short explanation)                                         |
-| - Overheating                                                                |
-| - Detonation/knock                                                           |
-+------------------------------------------------------------------------------+
+2. Run the app:
 
-Bottom:
-+------------------------------------------------------------------------------+
-| Ready to experiment?  [Go to Simulation]                                     |
-+------------------------------------------------------------------------------+
+   ```bash
+   dotnet run
+   ```
 
+3. When the app starts, open a browser and navigate to the URL shown in the console output  
+   - Mention: typically a `http://localhost:xxxx` or `https://localhost:xxxx` address.
 
-3. Simulation Page
-------------------
+4. Note:
+   - The app must be run from within `app/`.
+   - This is a Blazor WebAssembly project; no separate UI under `frontend/` or `backend/`.
 
-Desktop, 3-column layout:
+---
 
-+----------------------------------------------------------------------------------+
-| TOP NAV BAR                                                                      |
-+----------------------------------------------------------------------------------+
+## 5. Prerequisites (if separated from section 4.1)
 
-+----------------------------------------------------------------------------------+
-| LEFT: CONTROLS      | CENTER: VISUALIZER                      | RIGHT: OUTPUTS  |
-+----------------------------------------------------------------------------------+
+- Heading: `## Prerequisites`
+- Bullets:
+  - Installed .NET SDK (version compatible with project’s target framework).
+  - A supported OS (implicit) and terminal/shell.
+  - Web browser.
 
-LEFT COLUMN (controls; stacked cards):
+- Short note on:
+  - “If the exact .NET SDK version is not specified here, inspect the project file in `app/` to determine the `TargetFramework` and install a matching SDK.”
 
-+-------------------------------------+
-| CARD: Engine & Profile              |
-|-------------------------------------|
-| Engine Type: [13B-Style Rotary ▾]   |
-| Seal Type:  [OEM street ▾]          |
-+-------------------------------------+
+---
 
-+-------------------------------------+
-| CARD: Tuning Parameters             |
-|-------------------------------------|
-| Boost Pressure (psi) [ 10 ]        |
-| [====|------------] 0       25      |
-|  (?) tooltip                        |
-|                                     |
-| Air–Fuel Ratio (AFR) [ 11.5 ]       |
-| [------|---------] 9.0       15.0   |
-|  color-coded label “Rich/Safe/Lean” |
-|                                     |
-| Ignition Timing (° advance) [ 0 ]   |
-| [----|-----------] -5       +15     |
-|                                     |
-| RPM Profile                         |
-| ( ) Mostly street                   |
-| ( ) Mixed street/track              |
-| ( ) High RPM track use              |
-+-------------------------------------+
+## 6. Agents & Tasks
 
-+-------------------------------------+
-| CARD: Simulation Settings           |
-|-------------------------------------|
-| (x) Update automatically            |
-|                                     |
-| [ Run Simulation ] (disabled if auto|
-|  update ON)                         |
-|                                     |
-| Animation: [▶] [⏸] [Step]           |
-| Speed: [---|-----] 0.5x     2x      |
-+-------------------------------------+
+- Heading: `## Agents & Tasks`
+- Subsection `### agents/`
+  - One or two sentences:
+    - Reserved for agent definitions and configuration files.
+    - Intended to align with rotary builder agent roster conventions.
 
+- Subsection `### tasks/`
+  - One or two sentences:
+    - Reserved for EPIC and task definitions (e.g., `EPIC_00_MVP.md`).
+    - Organizes high-level work items and specifications.
 
-CENTER COLUMN (visualizer):
+- Optional short note:
+  - “These directories currently provide scaffolding; future EPICs and agents should be added here.”
 
-+-------------------------------------+
-| CARD: Rotary Visualizer             |
-|-------------------------------------|
-| [ ] Show Heat   [ ] Show Wear       |
-| [ ] Show Labels                      |
-|-------------------------------------|
-|   +-----------------------------+   |
-|   |   (SVG/Canvas area)        |   |
-|   |   [Housing outline]        |   |
-|   |    △ = rotor (rotating)    |   |
-|   |   Colored chambers:        |   |
-|   |    blue/yellow/orange/gray |   |
-|   +-----------------------------+   |
-|                                     |
-| Phase: [ Intake ]-[Compression]-    |
-|         [Combustion]-[Exhaust ]     |
-+-------------------------------------+
+---
 
+## 7. Logs & Changelog
 
-RIGHT COLUMN (outputs & explanations):
+- Heading: `## Logs & Changelog`
+- Content bullets:
+  - `logs/` holds project logs and history.
+  - `logs/CHANGELOG.md` records high-level changes to the repo, including this EPIC 00 retrofit.
+  - Expected usage pattern:
+    - Add a new dated entry describing changes whenever meaningful work is committed.
 
-+-------------------------------------+
-| CARD: Risk Summary                  |
-|-------------------------------------|
-|  [ SAFE / AGGRESSIVE / HIGH-RISK ]  |
-|  (large text, color background)     |
-|  Short explanation:                 |
-|   “Settings are relatively gentle…” |
-+-------------------------------------+
+---
 
-+-------------------------------------+
-| CARD: Indices                       |
-|-------------------------------------|
-| Apex Seal Wear Index:  35 / 100     |
-| [██████░░░░░░░░░] Low               |
-|                                     |
-| Heat Index:  48 / 100               |
-| [████████░░░░░░] Moderate           |
-+-------------------------------------+
+## 8. Documentation & Data
 
-+-------------------------------------+
-| CARD: What’s Driving This?          |
-|-------------------------------------|
-| - Moderate boost contributes to...  |
-| - AFR is slightly rich, reducing... |
-| - RPM profile is mostly street...   |
-+-------------------------------------+
+- Heading: `## Documentation and Data`
+- Subsection or bullets:
 
-+-------------------------------------+
-| CARD: Try This                      |
-|-------------------------------------|
-| - Lower boost below 10 psi for...   |
-| - Keep AFR below 12.0 under boost.  |
-+-------------------------------------+
+  - `docs/`:
+    - For additional project documentation.
+    - May include structure diagrams, design notes, or references (e.g., `STRUCTURE.md` if created).
 
-If extreme inputs:
+  - `db/`:
+    - For data and local database-related files.
+    - Currently may be empty or placeholder-only; reserved for future use.
 
-+-------------------------------------+
-| BANNER (top of RIGHT COLUMN)        |
-|  ⚠ Inputs are outside model’s       |
-|    recommended range; results are   |
-|    highly approximate.              |
-+-------------------------------------+
+---
 
+## 9. Notes & Assumptions
 
-Mobile layout (Simulation; top-to-bottom):
+- Heading: `## Notes & Assumptions`
+- Bullet list:
 
-1. Rotary Visualizer card
-2. Risk Summary card
-3. Indices card
-4. Controls cards (Engine & Profile, Tuning, Settings)
-5. Explanation cards (“What’s Driving This?”, “Try This”)
+  - All Blazor WebAssembly code stays under `app/`.
+  - No `frontend/` or `backend/` folders are used for the UI or app hosting.
+  - Any runtime or configuration changes must be applied inside `app/`.
+  - Keep this README in sync with:
+    - Root directory structure,
+    - Actual run instructions (`cd app`, `dotnet run`),
+    - `logs/CHANGELOG.md` entries.
 
-
-4. Glossary Page
-----------------
-
-+----------------------------------------------------------------------------------+
-| TOP NAV BAR                                                                      |
-+----------------------------------------------------------------------------------+
-
-[H1] Rotary Glossary
-
-[ Search: ______________________ (🔍) ]
-
-+-----------------------------------------------------------+
-| A                                                         |
-+-----------------------------------------------------------+
-| Apex Seal                                                 |
-|  Short definition (1–2 lines). [More ▾]                  |
-|  (expanded area if opened)                               |
-+-----------------------------------------------------------+
-| AFR (Air–Fuel Ratio)                                     |
-|  Short definition... [More ▾]                            |
-+-----------------------------------------------------------+
-
-+-----------------------------------------------------------+
-| C                                                         |
-+-----------------------------------------------------------+
-| Corner Seal                                               |
-|  Short definition... [More ▾]                            |
-+-----------------------------------------------------------+
-
-... continues alphabetically ...
-
-
-5. About & Disclaimers Page
----------------------------
-
-+----------------------------------------------------------------------------------+
-| TOP NAV BAR                                                                      |
-+----------------------------------------------------------------------------------+
-
-[H1] About & Disclaimers
-
-[Section] About This Project
-- Short text.
-
-[Section] Educational Use Only
-- Bulleted disclaimers.
-
-[Section] What This Model Does
-- List of “Does” and “Does Not”.
-
-[Section] Technical Assumptions (High-Level)
-- Short, simple text.
-
-[Section] Credits
-- Generic acknowledgments.
-
-Footer as on other pages.
+- Optional final line:
+  - “For additional structural details or alignment with the rotary builder project, see `docs/` (if present).”

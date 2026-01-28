@@ -1,0 +1,455 @@
+/* Rotary Builder – shared styles
+   Scoped using .rb-* prefixes to avoid impacting existing dashboard UI.
+-------------------------------------------------------------- */
+
+/* Landing page layout */
+
+.rb-builder-landing {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 3rem;
+}
+
+.rb-builder-landing-header {
+    margin-bottom: 1.75rem;
+}
+
+.rb-title {
+    margin: 0 0 0.25rem;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.rb-subtitle {
+    margin: 0;
+    color: #555;
+    font-size: 0.95rem;
+    max-width: 38rem;
+}
+
+/* Card that contains selector + button + info panel */
+
+.rb-landing-card {
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    border: 1px solid #e0e0e0;
+    padding: 1.75rem 1.5rem 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+/* Top row: selector + button */
+
+.rb-landing-main-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+}
+
+.rb-form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.rb-form-group:first-child {
+    flex: 1 1 240px;
+}
+
+.rb-create-button-group {
+    flex: 0 0 auto;
+}
+
+/* Labels & inputs */
+
+.rb-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+    color: #444;
+}
+
+.rb-label-hidden {
+    visibility: hidden;
+    height: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.rb-select {
+    min-width: 220px;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.35rem;
+    border: 1px solid #ccc;
+    font-size: 0.95rem;
+    background-color: #fff;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rb-select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.25);
+}
+
+/* Primary button (reuses app's likely primary color scheme) */
+
+.rb-btn-primary {
+    padding: 0.55rem 1.5rem;
+    border-radius: 0.35rem;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    background-color: #2563eb;
+    color: #ffffff;
+    min-width: 140px;
+    transition: background-color 0.12s ease, box-shadow 0.12s ease, transform 0.05s ease;
+}
+
+.rb-btn-primary:hover:not(:disabled) {
+    background-color: #1d4ed8;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+.rb-btn-primary:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0.12);
+}
+
+.rb-btn-primary:disabled {
+    opacity: 0.6;
+    cursor: default;
+    box-shadow: none;
+}
+
+/* Error messaging */
+
+.rb-error-message {
+    margin-bottom: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.35rem;
+    border: 1px solid #fca5a5;
+    background-color: #fef2f2;
+    color: #b91c1c;
+    font-size: 0.85rem;
+}
+
+/* Informational "How it works" panel */
+
+.rb-landing-info-panel {
+    margin-top: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #f0f0f0;
+}
+
+.rb-panel-title {
+    margin: 0 0 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.rb-steps-list {
+    margin: 0 0 0.5rem 1.1rem;
+    padding: 0;
+    font-size: 0.9rem;
+    color: #444;
+}
+
+.rb-steps-list li {
+    margin-bottom: 0.25rem;
+}
+
+.rb-helper-text {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+/* Responsive behavior for landing page */
+
+@media (max-width: 640px) {
+    .rb-builder-landing {
+        padding: 1.75rem 1rem 2.25rem;
+    }
+
+    .rb-landing-main-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .rb-select {
+        width: 100%;
+    }
+
+    .rb-btn-primary {
+        width: 100%;
+        text-align: center;
+    }
+
+    .rb-create-button-group {
+        width: 100%;
+    }
+
+    .rb-label-hidden {
+        display: none;
+    }
+}
+
+/* Shared builder layout styles for /builder/{buildId}
+   (used by BuilderPage, CategoryTree, PartsList, SummaryRail, WarningsPanel)
+-------------------------------------------------------------- */
+
+.rb-builder-layout {
+    display: grid;
+    grid-template-columns: minmax(200px, 240px) minmax(0, 1fr) minmax(260px, 320px);
+    gap: 1.25rem;
+    padding: 1.5rem;
+}
+
+.rb-builder-header {
+    padding: 1.25rem 1.5rem 0;
+}
+
+.rb-builder-title {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+.rb-builder-subtitle {
+    margin: 0.15rem 0 0;
+    font-size: 0.85rem;
+    color: #555;
+}
+
+/* Rails */
+
+.rb-category-rail {
+    border-radius: 0.5rem;
+    border: 1px solid #e5e5e5;
+    background-color: #fafafa;
+    padding: 0.75rem 0.75rem 0.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.rb-category-rail-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+    padding: 0 0.25rem;
+}
+
+.rb-category-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+}
+
+.rb-category-item {
+    padding: 0.4rem 0.35rem;
+    margin-bottom: 0.1rem;
+    border-radius: 0.35rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.rb-category-item:hover {
+    background-color: #e5efff;
+}
+
+.rb-category-item--active {
+    background-color: #2563eb;
+    color: #ffffff;
+}
+
+/* Center parts list */
+
+.rb-parts-panel {
+    border-radius: 0.5rem;
+    border: 1px solid #e5e5e5;
+    background-color: #ffffff;
+    padding: 0.75rem 0.75rem 0.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.rb-parts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.5rem;
+}
+
+.rb-parts-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.rb-parts-count {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.rb-parts-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.rb-parts-table th,
+.rb-parts-table td {
+    padding: 0.4rem 0.35rem;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.rb-parts-table th {
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: #555;
+}
+
+.rb-parts-table td.rb-price-cell {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.rb-part-row--selected {
+    background-color: #eff6ff;
+}
+
+/* Right rail: summary + warnings */
+
+.rb-right-rail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.rb-card {
+    border-radius: 0.5rem;
+    border: 1px solid #e5e5e5;
+    background-color: #ffffff;
+    padding: 0.75rem 0.9rem;
+}
+
+.rb-card-title {
+    margin: 0 0 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* SummaryRail specifics */
+
+.rb-summary-metric-label {
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 0.15rem;
+}
+
+.rb-summary-metric-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+}
+
+.rb-progress-track {
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    background-color: #e5e7eb;
+    overflow: hidden;
+    margin-bottom: 0.4rem;
+}
+
+.rb-progress-bar {
+    height: 100%;
+    background-color: #2563eb;
+    transition: width 0.15s ease-out;
+}
+
+/* Warnings panel */
+
+.rb-warnings-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.rb-warning-item {
+    display: flex;
+    align-items: flex-start;
+    font-size: 0.8rem;
+    padding: 0.2rem 0;
+}
+
+.rb-warning-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin-right: 0.4rem;
+    margin-top: 0.25rem;
+    background-color: #facc15; /* default warning yellow */
+}
+
+.rb-warning-item--critical .rb-warning-dot {
+    background-color: #f97373; /* red */
+}
+
+.rb-warning-item--info .rb-warning-dot {
+    background-color: #60a5fa; /* blue */
+}
+
+/* Responsive layout for builder page */
+
+@media (max-width: 1023px) {
+    .rb-builder-layout {
+        grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+        grid-template-rows: auto auto;
+        grid-template-areas:
+            "summary summary"
+            "categories parts";
+    }
+
+    .rb-right-rail {
+        grid-area: summary;
+        flex-direction: row;
+        align-items: stretch;
+    }
+
+    .rb-right-rail .rb-card {
+        flex: 1 1 0;
+    }
+
+    .rb-category-rail {
+        grid-area: categories;
+    }
+
+    .rb-parts-panel {
+        grid-area: parts;
+    }
+}
+
+@media (max-width: 767px) {
+    .rb-builder-layout {
+        display: block;
+        padding: 1rem;
+    }
+
+    .rb-right-rail,
+    .rb-category-rail,
+    .rb-parts-panel {
+        margin-bottom: 0.75rem;
+    }
+}

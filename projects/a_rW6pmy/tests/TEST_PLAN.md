@@ -1,0 +1,201 @@
+- General setup
+  - Ensure .NET SDK (version specified in README) is installed.
+  - From project root, verify the following files exist:
+    - README.md (root)
+    - docs/API.md
+    - logs/CHANGELOG.md
+    - app/ (Blazor project directory)
+    - TEST.md
+  - From project root, run:
+    - `cd app`
+    - `dotnet restore`
+    - `dotnet run`
+  - Confirm the app starts without build/runtime errors.
+
+- 1. Home Page Becomes Rotary Builder Landing
+  - Open a browser to the root URL (as indicated by `dotnet run`, typically `https://localhost:5001` or `http://localhost:5000`).
+  - Verify:
+    - The first rendered page is clearly labeled or branded as a “Rotary Builder” landing page (check for heading text like “Rotary Builder” or equivalent).
+    - There is an “Engine family” selector control (dropdown or equivalent) that appears functional.
+    - There is a prominent “Create Build” button or call-to-action.
+    - No legacy dashboard-only landing page content is visible or overlapping.
+  - Using browser dev tools Network tab:
+    - Select an engine family (if required by UI).
+    - Click “Create Build”.
+    - Confirm a `POST /api/builds` request is sent.
+    - Confirm response status is 200 or 201.
+    - Extract the `buildId` from the response payload.
+    - Verify the SPA navigates to `/builder/{buildId}` without full browser reload (URL updates, but no full page refresh; Blazor router remains active).
+
+- 2. Builder Page Routing: `/builder/{buildId}`
+  - With app running, manually change browser URL to `/builder/test-id`.
+  - Verify:
+    - The route is recognized (no generic 404 from server/browser).
+    - The BuilderPage layout is rendered (left rail, parts center, right summary rail).
+    - If `test-id` is not a known build ID, the page shows a “build not found” or similar user-facing error; no unhandled exception UI.
+  - From the landing page, create a valid build and let app navigate to `/builder/{real-build-id}`.
+  - In Network tab:
+    - Confirm `GET /api/builds/{real-build-id}` is issued on page load.
+    - Confirm 200 response and that payload includes engine family, selections, completion, cost, warnings.
+  - Visually confirm:
+    - Initial completion percentage and total cost appear in the right rail and are consistent with the stubbed defaults (e.g., 0% and 0 cost for empty selection, or documented values).
+
+- 3. Left Rail Category Tree (10 Categories)
+  - On `/builder/{valid-build-id}`, inspect the left rail.
+  - Verify:
+    - A clearly defined category list/tree component is present (either by code inspection or by clear visual separation).
+    - Exactly 10 categories are visible; count them manually.
+    - Category labels are readable and visually distinct as list/tree items.
+    - Selecting a category changes its visual state (highlight, bold, or other active indicator).
+  - Click multiple different categories:
+    - Confirm the active state moves to the clicked category.
+    - Confirm the center panel updates its content to represent the selected category.
+    - Ensure there is no full page reload (only component-level re-render).
+
+- 4. Center Panel PartsList
+  - For several different categories, inspect the center panel (parts list).
+  - Verify:
+    - The list displays one or more parts for each category, unless documented otherwise.
+    - Each part shows at least:
+      - A name or title.
+      - A numeric or formatted price.
+      - A selection control (checkbox, radio, toggle, or button).
+    - If using static JSON, verify by code inspection:
+      - Static data files exist under `app/wwwroot` (or equivalent).
+      - The parts list binds to these sources or to an equivalent static in-memory catalog in C#.
+  - Test selection behavior:
+    - Select a part; confirm its visual state indicates “selected”.
+    - Deselect the same part; confirm it returns to unselected state.
+    - Select multiple parts, then:
+      - Change to another category.
+      - Return to the original category.
+      - Verify previous selections are preserved (assuming same build session).
+    - Trigger actions that cause normal Blazor re-renders (e.g., switching categories) and verify selections persist as expected.
+
+- 5. Right Rail: SummaryRail and WarningsPanel
+  - On `/builder/{valid-build-id}`, inspect the right rail.
+  - Verify:
+    - There is a distinct summary section showing:
+      - Completion percentage (e.g., “Completion: 30%”).
+      - Total build cost (e.g., “Total Cost: $XYZ”).
+    - There is a warnings panel displaying a list of warnings (even if they are initially static).
+    - Labels and layout are clear and not visually broken.
+  - With Network tab open:
+    - Select and deselect parts in the center panel.
+    - Confirm total cost changes immediately and reflects the sum of selected parts.
+    - Confirm completion percentage changes based on required-part logic (as per docs or code comments).
+    - Confirm warnings list updates when triggered by selection logic (e.g., selecting a conflicting set of parts) or otherwise remains stable if no dynamic rules are implemented.
+    - Ensure no full page reload occurs during these operations.
+
+- 6. Real-time Updates & API Contracts
+  - Stress-test UI responsiveness:
+    - Rapidly select/deselect several parts across categories.
+    - Confirm:
+      - The UI remains responsive (no hanging, no obvious lag beyond minor acceptable delay).
+      - No browser full reload; only Blazor-level updates.
+  - Validate write endpoints via direct REST calls:
+    - Using curl/Postman or browser dev tools:
+      - Call `POST /api/builds/{valid-build-id}/selections` with a valid payload format as described in `docs/API.md`.
+      - Check the JSON response contains the fields:
+        - `summary`
+        - `completion`
+        - `cost`
+        - `warnings`
+      - Verify field types (string/number/array/object) match documentation.
+      - Call `DELETE /api/builds/{valid-build-id}/selections` with the documented payload or no body if appropriate.
+      - Confirm same response shape and consistent data types.
+    - Optionally compare values by:
+      - Viewing state via `GET /api/builds/{id}` before and after POST/DELETE.
+      - Confirm metrics and selections match UI behavior.
+
+- 7. Backend Stub Endpoints
+  - POST /api/builds
+    - Use curl or REST client:
+      - `POST /api/builds` with no body or minimal body as described in docs.
+    - Verify:
+      - Status code is 200 or 201.
+      - Response JSON includes:
+        - An `id` field (buildId) and it appears unique across multiple calls.
+        - Initial metrics (`summary`, `completion`, `cost`, `warnings` or other defined fields).
+    - Immediately call `GET /api/builds/{id}`:
+      - Confirm the build is retrievable and matches data from POST response.
+  - GET /api/builds/:id
+    - For a valid `id`:
+      - Confirm 200 status.
+      - Confirm payload includes:
+        - Engine family.
+        - Selected parts collection.
+        - Completion, cost, warnings.
+      - Modify selections via POST, then re-GET and confirm updates.
+    - For an invalid/nonexistent `id`:
+      - Confirm a 404 or documented error status.
+      - Confirm error body/message is reasonable (e.g., “Build not found”).
+  - POST /api/builds/:id/selections
+    - With a known build ID:
+      - Send a payload to select one or more parts.
+      - Confirm success status (200/204 with body as designed).
+      - Confirm response `{summary, completion, cost, warnings}` fields reflect the new selection state.
+      - Re-GET build and verify selections and metrics match POST response.
+  - DELETE /api/builds/:id/selections
+    - For a build with existing selections:
+      - Send DELETE call to `/api/builds/{id}/selections` according to docs (with or without body as specified).
+      - Confirm success status.
+      - Confirm metrics in response show cleared or reset selections (e.g., 0 cost, lower completion, fewer warnings).
+      - Re-GET build and verify selections and metrics are cleared/reset.
+
+- 8. Documentation Updates
+  - API documentation (`docs/API.md`)
+    - Open docs/API.md.
+    - Verify:
+      - There are sections for:
+        - `POST /api/builds`
+        - `GET /api/builds/:id`
+        - `POST /api/builds/:id/selections`
+        - `DELETE /api/builds/:id/selections`
+      - Each section includes at least one complete request example and response example with JSON.
+      - Field names and shapes in examples match actual behavior (confirm against live responses from manual tests).
+      - The description of metrics (summary, completion, cost, warnings) matches their types and semantics.
+  - CHANGELOG (`logs/CHANGELOG.md`)
+    - Open logs/CHANGELOG.md.
+    - Verify:
+      - A new line/entry exists for EPIC 02 or Rotary Builder MVP.
+      - The entry includes a date or version info consistent with prior entries.
+      - It summarizes the Builder MVP implementation.
+      - Earlier entries have not been modified (compare git history if necessary).
+  - Root README (`README.md`)
+    - Open README.md at repo root.
+    - Verify:
+      - README exists and is non-empty.
+      - Contains:
+        - A concise description of the Rotary Builder MVP.
+        - Prerequisites (e.g., required .NET SDK version; any browser notes).
+        - Explicit instructions to run app:
+          - `cd app`
+          - `dotnet run`
+          - How to access the app in the browser (URL).
+        - Mentions:
+          - Rotary Builder landing page as home.
+          - `/builder/{buildId}` behavior and what it shows.
+
+- 9. Regression: Dashboard Simulation Isolation
+  - Identify existing dashboard-related routes/pages by:
+    - Scanning `app/Pages` and existing navigation menus.
+    - Using README or docs to locate dashboard features.
+  - Navigate to those dashboard pages in the running app.
+  - Perform known interactions/simulations:
+    - Confirm they render correctly (no layout corruption from builder styles).
+    - Confirm functionality (buttons, controls, data updates) works as before.
+  - Check for unintended coupling:
+    - Ensure that interacting with dashboard features does not affect builder state (unless explicitly designed).
+    - Ensure that builder-specific UI components do not appear on dashboard-only pages.
+
+- 10. Reporting & Tracking
+  - For each TEST.md section, maintain a checklist:
+    - Mark each acceptance criterion as Pass/Fail.
+    - For failures:
+      - Record steps to reproduce.
+      - Capture relevant API responses or screenshots.
+  - After completing all tests:
+    - Summarize:
+      - Overall status for EPIC 02 (e.g., all criteria met, or list remaining gaps).
+      - Any high-risk defects impacting key flows (home page, builder page, API correctness, regressions).
